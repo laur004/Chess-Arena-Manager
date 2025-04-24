@@ -1,17 +1,15 @@
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Tournament {
-    int id;
-    String name;
-    Person organizer;
-    Arbiter arbiter;
-    ArrayList<Player> players; //vreau sa fie sortata dupa rating la fiecare adaugare de jucator
-    ArrayList<Round> rounds;
-    Ranking ranking;
-    int noRounds;
+    private int id;
+    private String name;
+    private Person organizer;
+    private Arbiter arbiter;
+    //ArrayList<Player> players; //vreau sa fie sortata dupa rating la fiecare adaugare de jucator
+    private TreeSet<Player> players;
+    private ArrayList<Round> rounds;
+    private Ranking ranking;
+    private int noRounds;
     //TimeControl timeControl;
 
 
@@ -20,7 +18,7 @@ public class Tournament {
         this.name=name;
         this.organizer=organizer;
         this.id=IDGenerator.getTournamentId();
-        this.players =new ArrayList<>();
+        this.players =new TreeSet<>();
     }
 
     public int getId(){
@@ -69,7 +67,7 @@ public class Tournament {
         }
         if(!exists) {
             players.add(player);
-            players.sort(Player::compareTo);
+            //players.sort(Player::compareTo);
         }
     }
     public void removePlayer(String fideId){
@@ -106,8 +104,7 @@ public class Tournament {
     public void pairingSystem() {
 
         ranking = new Ranking();
-        for (int i = 0; i < players.size(); i++) {
-            Player player = (Player) players.get(i);
+        for (Player player : players) {
             Player playerCopy = new Player(player.getLastName(), player.getFirstName(), player.getRating());
             ranking.addPlayer(playerCopy);
         }

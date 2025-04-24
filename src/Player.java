@@ -67,7 +67,14 @@ public class Player extends Person implements Comparable<Player>{
 
     @Override
     public int compareTo(Player p) {
-        return Integer.compare(p.rating, this.rating);
+
+        int result=p.rating-this.rating;
+        if(result!=0){
+            return result;
+        }
+        else{
+            return Integer.parseInt(this.fideID)-Integer.parseInt(p.fideID);
+        }
     }
 
 }

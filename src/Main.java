@@ -6,17 +6,13 @@ public class Main {
 
 
 
-
-        String n=(String.valueOf(4));
-        System.out.println(n);
-
         TournamentsManager t=TournamentsManager.getInstance();
         t.addTournament(new Tournament("CN",new Person("SAH","FR")));
         t.addTournament(new Tournament("Cupa de Primavara",new Person("Mihai","Petre")));
         t.addTournament(new Tournament("Cupa de Primavara",new Person("Mihai","Georgescu")));
         //t.showTournaments();
         t.removeTournament(2);
-        System.out.println("Dupa eliminarea turneului 2:");
+        //System.out.println("Dupa eliminarea turneului 2:");
         //t.showTournaments();
 
 
