@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 
 public class Round {
+
+    int roundId;
+    private int tournamentId;
     private ArrayList<Game> games;
 
     public Round(){

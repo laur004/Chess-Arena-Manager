@@ -1,3 +1,6 @@
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class ServiceClass {
@@ -10,7 +13,7 @@ public class ServiceClass {
     }
 
     public void newTournament(String tournamentName, String organizerFirstName, String organizerLastName) {
-        Person o = new Person(organizerFirstName, organizerLastName);
+        Organizer o = new Organizer(organizerFirstName, organizerLastName);
         Tournament t = new Tournament(tournamentName, o);
         tournamentsManager.addTournament(t);
     }
@@ -33,28 +36,36 @@ public class ServiceClass {
     public void addPlayer() {
         Tournament t = getTournamentByIndex();
         if (t == null) return;
+        if(t.getRounds()==null) {
+            System.out.print("First name: ");
+            String fn = scanner.nextLine();
+            System.out.print("Last name: ");
+            String ln = scanner.nextLine();
+            System.out.print("Rating: ");
+            int rating = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("First name: ");
-        String fn = scanner.nextLine();
-        System.out.print("Last name: ");
-        String ln = scanner.nextLine();
-        System.out.print("Rating: ");
-        int rating = Integer.parseInt(scanner.nextLine());
+            TournamentPlayer p = new TournamentPlayer(fn, ln, rating);
 
-        Player p = new Player(fn, ln, rating);
-
-        t.addPlayer(p);
-        System.out.println("Player added.");
+            t.addPlayer(p);
+            System.out.println("Player added.");
+        }
+        else{
+            System.out.println("Tournament has already started!");
+        }
     }
 
     public void removePlayer() {
         Tournament t = getTournamentByIndex();
         if (t == null) return;
-
-        System.out.print("Enter FIDE ID of player to remove: ");
-        String id = scanner.nextLine();
-        t.removePlayer(id);
-        System.out.println("Player removed.");
+        if(t.getRounds()==null) {
+            System.out.print("Enter FIDE ID of player to remove: ");
+            String id = scanner.nextLine();
+            t.removePlayer(id);
+            System.out.println("Player removed.");
+        }
+        else{
+            System.out.println("Tournament has already started!");
+        }
     }
 
     public void startTournament() {
@@ -68,11 +79,7 @@ public class ServiceClass {
     public void showRounds() {
         Tournament t = getTournamentByIndex();
         if (t != null) {
-            int i = 1;
-            for (Round r : t.getRounds()) {
-                System.out.println("Round " + i++ + ":");
-                r.printRound();
-            }
+            t.showRounds();
         }
     }
 
@@ -80,7 +87,7 @@ public class ServiceClass {
         Tournament t = getTournamentByIndex();
         if (t != null) {
             t.setPointsToAllPLayers();
-            System.out.println("Points updated.");
+            //System.out.println("Points updated.");
         }
     }
 
@@ -110,6 +117,146 @@ public class ServiceClass {
         } else {
             System.out.println("No arbiter assigned.");
         }
+    }
+
+    public void showAllPlayers() throws SQLException {
+        List<Player> playersList=PlayerService.getInstance().readAll();
+        playersList.forEach(p-> System.out.println("FIDE ID: "+p.getFideId()+" "+p));
+    }
+
+    public void showAllArbiters() throws SQLException {
+        List<Arbiter> arbitersList=ArbiterService.getInstance().readAll();
+        arbitersList.forEach(a-> System.out.println("FIDE ID: "+a.getFideId()+" "+a));
+    }
+
+    public void showAllOrganizers() throws SQLException {
+        List<Organizer> organizersList=OrganizerService.getInstance().readAll();
+        organizersList.forEach(o-> System.out.println("ID: "+o.getPersonId()+" "+o+" Phone Number: "+
+                o.getPhoneNumber()+" Email: "+o.getEmail()));
+    }
+
+    public void showAllPeople() throws SQLException {
+        List<Person> peopleList=PersonService.getInstance().readAll();
+        peopleList.forEach(p-> System.out.println("Person ID: "+p.getPersonId()+" "+p+" FIDE ID: "+p.getFideId()));
+    }
+
+    public void updatePerson() throws SQLException{
+        showAllPeople();
+        System.out.print("Type the Person's ID: ");
+        int personId=Integer.parseInt(scanner.nextLine());
+        System.out.print("First name: ");
+        String fn = scanner.nextLine();
+        System.out.print("Last name: ");
+        String ln = scanner.nextLine();
+        System.out.print("FIDE ID: ");
+        String fideId = scanner.nextLine();
+
+        PersonService.getInstance().update(personId,fn,ln,fideId);
+
+    }
+
+    public void createPlayer() throws SQLException{
+        System.out.print("Type the Player's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        System.out.println("Type the Player's FIDE title");
+        String titleString= scanner.nextLine();
+        System.out.println("Type the Player's FIDE rating");
+        int rating = Integer.parseInt(scanner.nextLine());
+
+        PlayerService.getInstance().create(new Player(fideId,PlayerTitle.valueOf(titleString.toUpperCase()),rating));
+    }
+
+    public void createArbiter() throws SQLException {
+        System.out.print("Type the Arbiter's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        System.out.print("Type the Arbiter's FIDE title: ");
+        String titleString= scanner.nextLine();
+
+        ArbiterService.getInstance().create(new Arbiter(fideId,ArbiterTitle.valueOf(titleString.toUpperCase())));
+    }
+
+    public void createOrganizer() throws SQLException{
+        System.out.print("Type the Organizer's ID: ");
+        int organizerId=Integer.parseInt(scanner.nextLine());
+        System.out.print("Type the Organizer's phone number: ");
+        String phoneNumber= scanner.nextLine();
+        System.out.print("Type the Organizer's email: ");
+        String email=scanner.nextLine();
+
+        OrganizerService.getInstance().create(new Organizer(organizerId,phoneNumber,email));
+    }
+
+    public void createPerson() throws SQLException{
+        System.out.print("First name: ");
+        String fn = scanner.nextLine();
+        System.out.print("Last name: ");
+        String ln = scanner.nextLine();
+        System.out.print("FIDE ID: ");
+        String fideId = scanner.nextLine();
+
+        PersonService.getInstance().create(new Person(fideId,fn,ln));
+    }
+
+    public void deletePlayer() throws SQLException{
+        showAllPlayers();
+        System.out.print("Type the Player's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        PlayerService.getInstance().delete(fideId);
+    }
+    public void deleteArbiter() throws SQLException{
+        showAllArbiters();
+        System.out.print("Type the Arbiter's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        ArbiterService.getInstance().delete(fideId);
+    }
+    public void deleteOrganizer() throws SQLException{
+        showAllOrganizers();
+        System.out.print("Type the Organizer's ID: ");
+        int organizerId=Integer.parseInt(scanner.nextLine());
+        OrganizerService.getInstance().delete(organizerId);
+    }
+    public void deletePerson() throws SQLException{
+        showAllPeople();
+        System.out.print("Type the Person's ID: ");
+        int personId=Integer.parseInt(scanner.nextLine());
+        PersonService.getInstance().delete(personId);
+
+    }
+
+    public void updatePlayer() throws SQLException{
+        showAllPlayers();
+        System.out.print("Type the Player's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        System.out.print("Type the Player's FIDE title: ");
+        String title = scanner.nextLine();
+        System.out.print("Type the Player's FIDE rating: ");
+        int rating = Integer.parseInt(scanner.nextLine());
+
+        PlayerService.getInstance().updateTitle(fideId,PlayerTitle.valueOf(title.toUpperCase()));
+        PlayerService.getInstance().updateRating(fideId,rating);
+
+    }
+    public void updateArbiter() throws SQLException{
+        showAllArbiters();
+        System.out.print("Type the Arbiter's FIDE ID: ");
+        String fideId=scanner.nextLine();
+        System.out.print("Type the Arbiter's FIDE title: ");
+        String title = scanner.nextLine();
+
+        ArbiterService.getInstance().updateTitle(fideId,ArbiterTitle.valueOf(title.toUpperCase()));
+
+    }
+    public void updateOrganizer() throws SQLException{
+        showAllOrganizers();
+        System.out.print("Type organizer's ID: ");
+        int organizerId= Integer.parseInt(scanner.nextLine());
+        System.out.print("Type organizer's phone number: ");
+        String phoneNumber=scanner.nextLine();
+        System.out.print("Type organizer's email: ");
+        String email=scanner.nextLine();
+
+        OrganizerService.getInstance().updatePhoneNumber(organizerId,phoneNumber);
+        OrganizerService.getInstance().updateEmail(organizerId,email);
     }
 
     private Tournament getTournamentByIndex() {

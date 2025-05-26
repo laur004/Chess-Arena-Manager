@@ -1,6 +1,11 @@
 public class Arbiter extends Person{
     ArbiterTitle title;
 
+    public Arbiter(String fideId, ArbiterTitle title){
+        super(fideId);
+        this.title=title;
+    }
+
     public Arbiter(String firstName, String lastName){
         super(firstName,lastName);
     }

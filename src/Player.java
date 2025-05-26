@@ -1,39 +1,37 @@
 import java.util.Objects;
 
-public class Player extends Person implements Comparable<Player>{
+public class Player extends Person {
     private PlayerTitle title;
-    private String fideID;
-    private int rating;
+    //private String fideID;
+    protected int rating;
 
 
     public Player(){
         super("","Bye");
     }
-    public Player(String firstName, String lastName, int rating){
-        super(firstName,lastName);
+
+    public Player(String fideId, PlayerTitle title, int rating){
+        super(fideId);
+        this.title=title;
         this.rating=rating;
-        fideID=String.valueOf(IDGenerator.getFideId());
+    }
+
+    public Player(String firstName, String lastName, int rating){
+        super(String.valueOf(IDGenerator.getFideId()),firstName,lastName);
+        this.rating=rating;
+
     }
     public Player(String firstName, String lastName, int rating, PlayerTitle title, String fideID){
-        super(firstName,lastName);
+        super(fideID,firstName,lastName);
         this.rating=rating;
         this.title=title;
-        this.fideID=fideID;
     }
     public Player(Player original) {
-        super(original.getFirstName(), original.getLastName());
+        super(original.getFideId(),original.getFirstName(), original.getLastName());
         this.rating = original.getRating();
         this.title = original.getTitle();
-        this.fideID=original.getFideID();
     }
 
-    public String getFideID() {
-        return fideID;
-    }
-
-    public void setFideID(String fideID) {
-        this.fideID = fideID;
-    }
 
     public int getRating() {
         return rating;
@@ -58,23 +56,28 @@ public class Player extends Person implements Comparable<Player>{
 
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Player)) return false;
-        Player other = (Player) o;
-        return Objects.equals(this.fideID, other.fideID);
+    public int hashCode() {
+        return getFideId().hashCode();
     }
 
     @Override
-    public int compareTo(Player p) {
-
-        int result=p.rating-this.rating;
-        if(result!=0){
-            return result;
-        }
-        else{
-            return Integer.parseInt(this.fideID)-Integer.parseInt(p.fideID);
-        }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o==null || getClass()!=o.getClass()) return false;
+        Player other = (Player) o;
+        return Objects.equals(this.getFideId(), other.getFideId());
     }
+
+//    @Override
+//    public int compareTo(Player p) {
+//
+//        int result=p.rating-this.rating;
+//        if(result!=0){
+//            return result;
+//        }
+//        else{
+//            return fideID.compareTo(p.fideID);
+//        }
+//    }
 
 }

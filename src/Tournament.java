@@ -1,24 +1,32 @@
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class Tournament {
     private int id;
     private String name;
-    private Person organizer;
+    private Organizer organizer;
     private Arbiter arbiter;
-    //ArrayList<Player> players; //vreau sa fie sortata dupa rating la fiecare adaugare de jucator
-    private TreeSet<Player> players;
+    //ArrayList<TournamentPlayer> players; //vreau sa fie sortata dupa rating la fiecare adaugare de jucator
+    private TreeSet<TournamentPlayer> startingList = new TreeSet<>(Comparator.reverseOrder());
     private ArrayList<Round> rounds;
-    private Ranking ranking;
+    private TreeSet<TournamentPlayer> ranking;
     private int noRounds;
     //TimeControl timeControl;
 
 
+    public Tournament(int id, String name, Organizer organizer) {
+        this.id = id;
+        this.name = name;
+        this.organizer = organizer;
+    }
 
-    public Tournament(String name, Person organizer){
+
+
+    public Tournament(String name, Organizer organizer){
         this.name=name;
         this.organizer=organizer;
         this.id=IDGenerator.getTournamentId();
-        this.players =new TreeSet<>();
     }
 
     public int getId(){
@@ -35,7 +43,7 @@ public class Tournament {
         return name;
     }
 
-    public void setOrganizer(Person organizer) {
+    public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
     }
     public Person getOrganizer() {
@@ -53,39 +61,54 @@ public class Tournament {
         return rounds;
     }
 
-    public boolean equals(Tournament tournament) {
-        return id==tournament.getId();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o==null || getClass()!=o.getClass()) return false;
+        Tournament other = (Tournament) o;
+        return Objects.equals(this.id, other.getId());
     }
 
-    public void addPlayer(Player player){
+    public void addPlayer(TournamentPlayer player){
         boolean exists=false;
-        for(Player p:players){
+        for(TournamentPlayer p:startingList){
             if(player.equals(p)){
                 exists=true;
                 break;
             }
         }
         if(!exists) {
-            players.add(player);
-            //players.sort(Player::compareTo);
+            startingList.add(player);
+            //players.sort(TournamentPlayer::compareTo);
         }
     }
     public void removePlayer(String fideId){
-        for(Player p:players){
-            if(fideId.equals(p.getFideID())){
-                players.remove(p);
+        for(TournamentPlayer p:startingList){
+            if(fideId.equals(p.getFideId())){
+                startingList.remove(p);
                 break;
             }
         }
     }
 
+    public void showRounds() {
+
+        if(rounds!=null) {
+            int i=1;
+            for (Round r : rounds) {
+                System.out.println("Round " + i++ + ":");
+                r.printRound();
+            }
+        }
+        else{
+            System.out.println("Tournament has not started yet!");
+        }
+    }
+
     public void showStartingList(){
         System.out.println("Starting List:");
-        int i=1;
-        for(Player p: players){
-            System.out.println(i+"."+p);
-            i++;
-        }
+        AtomicInteger i = new AtomicInteger(1);
+        startingList.forEach(p-> System.out.println(i.getAndIncrement()+"."+p));
     }
 
 
@@ -94,37 +117,59 @@ public class Tournament {
     }
 
     public void setPointsToAllPLayers(){
-        ranking.setPointsToAllPlayers();
+        if(ranking!=null) {
+            Scanner obj = new Scanner(System.in);
+            double points;
+            System.out.println("Set points for each player:");
+            for (TournamentPlayer tp : ranking) {
+                System.out.println(tp);
+                System.out.print("Points: ");
+                points = Double.parseDouble(obj.nextLine());
+                tp.setPoints(points);
+            }
+
+        }
+        else{
+            System.out.println("Tournament has not started yet!");
+        }
+
     }
 
     public void showRanking(){
-        ranking.showRanking();
+        if(ranking!=null){
+        AtomicInteger i = new AtomicInteger(1);
+        ranking.forEach(p -> System.out.println(
+                i.getAndIncrement() + " " + p + " Points: " + p.getPoints()));
+        }
+        else {
+            System.out.println("Tournament has not started yet!");
+        }
     }
 
     public void pairingSystem() {
 
-        ranking = new Ranking();
-        for (Player player : players) {
-            Player playerCopy = new Player(player.getLastName(), player.getFirstName(), player.getRating());
-            ranking.addPlayer(playerCopy);
+        ranking = new TreeSet<>(Comparator.reverseOrder());;
+        for (TournamentPlayer player : startingList) {
+            TournamentPlayer playerCopy = new TournamentPlayer(player.getLastName(), player.getFirstName(), player.getRating());
+            ranking.add(playerCopy);
         }
-        noRounds=(players.size()%2==1)? players.size() : players.size()-1;
+        noRounds=(startingList.size()%2==1)? startingList.size() : startingList.size()-1;
 
-        rounds = new ArrayList();
+        rounds = new ArrayList<>();
         for (int i = 0; i < noRounds; i++) {
             rounds.add(new Round());
         }
 
         boolean whiteColor = true;
-        ArrayList rotatedPlayers = new ArrayList(players);
+        ArrayList<TournamentPlayer> rotatedPlayers = new ArrayList<>(startingList);
 
 
-        if (players.size() % 2 == 1) {
+        if (startingList.size() % 2 == 1) {
             for (int roundIndex = 0; roundIndex < noRounds; roundIndex++) {
                 Round currentRound = (Round) rounds.get(roundIndex);
-                int noPlayers = players.size();
+                int noPlayers = startingList.size();
 
-                ArrayList games = new ArrayList(noPlayers / 2 + 1);
+                ArrayList<Game> games = new ArrayList<>(noPlayers / 2 + 1);
                 for (int i = 0; i <= noPlayers / 2; i++) {
                     games.add(new Game());
                 }
@@ -135,40 +180,40 @@ public class Tournament {
                     for (int gameIndex = 0; gameIndex < noPlayers / 2; gameIndex++) {
                         Game game = (Game) games.get(gameIndex);
                         if (whiteColor) {
-                            game.setWhite((Player) rotatedPlayers.get(gameIndex));
-                            game.setBlack((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
+                            game.setWhite((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                            game.setBlack((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
                         } else {
-                            game.setBlack((Player) rotatedPlayers.get(gameIndex));
-                            game.setWhite((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
+                            game.setBlack((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                            game.setWhite((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
                         }
                     }
 
 
                     Game byeGame = (Game) games.get(noPlayers / 2);
-                    byeGame.setWhite((Player) rotatedPlayers.get(noPlayers / 2));
-                    byeGame.setBlack(new Player("Bye", "", 0));
+                    byeGame.setWhite((TournamentPlayer) rotatedPlayers.get(noPlayers / 2));
+                    byeGame.setBlack(new TournamentPlayer("Bye", "", 0));
                     byeGame.setResult(GameResult.W);
 
 
-                    Player temp = (Player) rotatedPlayers.get(1);
+                    TournamentPlayer temp = (TournamentPlayer) rotatedPlayers.get(1);
                     rotatedPlayers.remove(1);
                     rotatedPlayers.add(temp);
                 } else {
 
                     // Last round
                     Game byeGame = (Game) games.get(noPlayers / 2);
-                    byeGame.setWhite((Player) rotatedPlayers.get(0));
-                    byeGame.setBlack(new Player("Bye", "", 0));
+                    byeGame.setWhite((TournamentPlayer) rotatedPlayers.get(0));
+                    byeGame.setBlack(new TournamentPlayer("Bye", "", 0));
                     byeGame.setResult(GameResult.W);
 
                     for (int gameIndex = 1; gameIndex <= noPlayers / 2; gameIndex++) {
                         Game game = (Game) games.get(gameIndex - 1);
                         if (whiteColor) {
-                            game.setWhite((Player) rotatedPlayers.get(gameIndex));
-                            game.setBlack((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex));
+                            game.setWhite((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                            game.setBlack((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex));
                         } else {
-                            game.setBlack((Player) rotatedPlayers.get(gameIndex));
-                            game.setWhite((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex));
+                            game.setBlack((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                            game.setWhite((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex));
                         }
                     }
                 }
@@ -178,9 +223,9 @@ public class Tournament {
         } else {
             for (int roundIndex = 0; roundIndex < rounds.size(); roundIndex++) {
                 Round round = (Round) rounds.get(roundIndex);
-                int noPlayers = players.size();
+                int noPlayers = startingList.size();
 
-                ArrayList games = new ArrayList(noPlayers / 2);
+                ArrayList<Game> games = new ArrayList<>(noPlayers / 2);
                 for (int i = 0; i < noPlayers / 2; i++) {
                     games.add(new Game());
                 }
@@ -189,11 +234,11 @@ public class Tournament {
                 for (int gameIndex = 0; gameIndex < noPlayers / 2; gameIndex++) {
                     Game game = (Game) games.get(gameIndex);
                     if (whiteColor) {
-                        game.setWhite((Player) rotatedPlayers.get(gameIndex));
-                        game.setBlack((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
+                        game.setWhite((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                        game.setBlack((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
                     } else {
-                        game.setBlack((Player) rotatedPlayers.get(gameIndex));
-                        game.setWhite((Player) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
+                        game.setBlack((TournamentPlayer) rotatedPlayers.get(gameIndex));
+                        game.setWhite((TournamentPlayer) rotatedPlayers.get(rotatedPlayers.size() - gameIndex - 1));
                     }
                 }
 
@@ -202,7 +247,7 @@ public class Tournament {
 
                 if (roundIndex < rounds.size() - 1) {
 
-                    Player temp = (Player) rotatedPlayers.get(1);
+                    TournamentPlayer temp = (TournamentPlayer) rotatedPlayers.get(1);
                     rotatedPlayers.remove(1);
                     rotatedPlayers.add(temp);
                 }

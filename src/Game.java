@@ -1,6 +1,6 @@
 public class Game {
-    private Player white;
-    private Player black;
+    private TournamentPlayer white;
+    private TournamentPlayer black;
     private GameResult result;
 
 
@@ -11,15 +11,15 @@ public class Game {
         return result;
     }
 
-    public void setWhite(Player player){
-        white=player;
+    public void setWhite(TournamentPlayer tournamentPlayer){
+        white=tournamentPlayer;
     }
     public Player getWhite() {
         return white;
     }
 
-    public void setBlack(Player player) {
-        black = player;
+    public void setBlack(TournamentPlayer tournamentPlayer) {
+        black = tournamentPlayer;
     }
     public Player getBlack() {
         return black;
