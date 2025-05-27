@@ -1,6 +1,6 @@
 //import java.util.*;
 //
-//public class IndividualTournament extends Tournament{
+//public class IndividualTournament extends Entities.Tournament{
 //
 //
 //}

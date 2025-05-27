@@ -22,7 +22,7 @@
    - Elimină un jucător dintr-un turneu, pe baza ID-ului FIDE al acestuia.
 
 ### 7. **startTournament()**
-   - Începe un turneu și generează sistemul de împerechere(momentan doar Round-Robin).
+   - Începe un turneu și generează sistemul de împerechere(momentan doar Entities.Round-Robin).
 
 ### 8. **showRounds()**
    - Afișează toate partidele fiecărei runde dintr-un turneu.
@@ -41,5 +41,5 @@
 
 
 ## Sisteme de imperechere disponibile
-### -Round-Robin
+### -Entities.Round-Robin
 

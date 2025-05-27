@@ -1,50 +1,13 @@
+import Entities.PlayerTitle;
+import Entities.TournamentPlayer;
+import Entities.TournamentsManager;
+import Service.ServiceClass;
+
 import java.sql.*;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args){
-
-
-
-        TournamentsManager t=TournamentsManager.getInstance();
-        t.addTournament(new Tournament("CN",new Organizer("SAH","FR")));
-        t.addTournament(new Tournament("Cupa de Primavara",new Organizer("Mihai","Petre")));
-        t.addTournament(new Tournament("Cupa de Primavara",new Organizer("Mihai","Georgescu")));
-        //t.showTournaments();
-        t.removeTournament(2);
-        //System.out.println("Dupa eliminarea turneului 2:");
-        //t.showTournaments();
-
-
-        TournamentPlayer p1=new TournamentPlayer("Magnus", "Carlsen", 2838,PlayerTitle.GM, "1503014");
-        TournamentPlayer p2=new TournamentPlayer("Hikaru","Nakamura",2801,PlayerTitle.GM, "2016192");
-        TournamentPlayer p3=new TournamentPlayer("Claudiu","Popescu",1500);
-        TournamentPlayer p4=new TournamentPlayer("Andrei","Pop",1500);
-        TournamentPlayer p5=new TournamentPlayer("Mircea","Popa",1500);
-
-        //System.out.println(p3.getFideID());
-        //System.out.println(p4.getFideID());
-
-        t.getTournaments().get(0).addPlayer(p2);
-        t.getTournaments().get(0).addPlayer(p3);
-        t.getTournaments().get(0).addPlayer(p4);
-        t.getTournaments().get(0).addPlayer(p5);
-        //t.getTournaments().get(0).showStartingList();
-
-
-        t.getTournaments().get(0).addPlayer(p1);
-        //t.getTournaments().get(0).showStartingList();
-
-        //t.getTournaments().get(0).removePlayer("1503014");
-        //t.getTournaments().get(0).showStartingList();
-
-//        t.getTournaments().get(0).pairingSystem();
-//        for(int i=0;i<t.getTournaments().get(0).getRounds().size();i++) {
-//            System.out.println("Runda "+(i+1)+":");
-//            t.getTournaments().get(0).getRounds().get(i).printRound();
-//        }
-        //t.getTournaments().get(0).setPointsToAllPLayers();
-        //t.getTournaments().get(0).showRanking();
 
 
         Scanner obj=new Scanner(System.in);
@@ -62,13 +25,13 @@ public class Main {
             System.out.println("3. Remove a tournament");
             System.out.println("4. Show the starting list of a registered tournament");
             System.out.println("5. Add a player to a tournament");
-            System.out.println("6. Remove a player from a tournament by ID");
-            System.out.println("7. Start a tournament");
-            System.out.println("8. Show the pairings");
-            System.out.println("9. Set points to each player");
-            System.out.println("10. Show the tournament ranking list");
-            System.out.println("11. Assign an arbiter");
-            System.out.println("12. Show the tournament arbiter");
+            System.out.println("6. Remove a player from a tournament by FIDE ID");
+            System.out.println("7. Start a tournament??");
+            System.out.println("8. Show the pairings??");
+            System.out.println("9. Set points to each player??");
+            System.out.println("10. Show the tournament ranking list??");
+            System.out.println("11. Add an arbiter to a tournament");
+            System.out.println("12. Show the tournament's arbiters");
             System.out.println("13. Show all players");
             System.out.println("14. Show all arbiters");
             System.out.println("15. Show all organizers");
@@ -85,6 +48,7 @@ public class Main {
             System.out.println("26. Update a player");
             System.out.println("27. Update an arbiter");
             System.out.println("28. Update an organizer");
+            System.out.println("29. Remove tournament arbiter");
             System.out.println("Type your option: ");
             option=obj.nextLine();
 
@@ -94,52 +58,87 @@ public class Main {
                     stop = true;
                     break;
                 case "1":
-                    sv.showTournaments();
+                    try {
+                        sv.showAllTournaments();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
-                case "2": {
-                    String tn, fn, ln;
-                    System.out.print("Tournament name: ");
-                    tn = obj.nextLine();
-                    System.out.print("Organizer's first name: ");
-                    fn = obj.nextLine();
-                    System.out.print("Organizer's last name: ");
-                    ln = obj.nextLine();
-                    sv.newTournament(tn, fn, ln);
+                case "2":
+                    try {
+                    sv.createTournament();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
                 break;
-                case "3": {
-                    sv.showTournaments();
-                    System.out.print("Type the tournament index: ");
-                    int i = Integer.parseInt(obj.nextLine());
-                    sv.removeTournament(i-1);
+                case "3": try {
+                    sv.deleteTournament();
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
                 break;
                 case "4":
-                    sv.showTournamentPlayers();
+                    try {
+                        sv.showTournamentStartingList();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "5":
-                    sv.addPlayer();
+                    try {
+                        sv.createTournamentPlayer();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "6":
-                    sv.removePlayer();
+                    try {
+                        sv.deleteTournamentPlayer();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "7":
-                    sv.startTournament();
+                    try {
+                        sv.startTournament();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "8":
-                    sv.showRounds();
+                    try {
+                        sv.showRounds();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "9":
-                    sv.setPlayersPoints();
+                    try {
+                        sv.setPlayersPoints();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "10":
-                    sv.showRanking();
+                    try {
+                        sv.showRanking();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "11":
-                    sv.setTournamentArbiter();
+                    try{
+                        sv.createTournamentArbiter();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "12":
-                    sv.showTournamentArbiter();
+                    try{
+                        sv.showTournamentArbiters();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "13":
                     try{
@@ -249,6 +248,13 @@ public class Main {
                 case "28":
                     try{
                         sv.updateOrganizer();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "29":
+                    try{
+                        sv.deleteTournamentArbiter();
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
