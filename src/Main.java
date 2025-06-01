@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -72,12 +73,8 @@ public class Main {
                     fout.write("Exit App,"+ LocalDateTime.now()+"\n");
                     break;
                 case "1":
-                    try {
-                        sv.showAllTournaments();
-                        fout.write("Show all tournaments,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showAllTournaments();
+                    fout.write("Show all tournaments,"+ LocalDateTime.now()+"\n");
                     break;
                 case "2":
                     try {
@@ -87,214 +84,111 @@ public class Main {
                     e.printStackTrace();
                 }
                 break;
-                case "3": try {
+                case "3":
                     sv.deleteTournament();
                     fout.write("Delete a tournament,"+ LocalDateTime.now()+"\n");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                break;
+                    break;
                 case "4":
-                    try {
-                        sv.showTournamentStartingList();
-                        fout.write("Show tournament's starting list,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showTournamentStartingList();
+                    fout.write("Show tournament's starting list,"+ LocalDateTime.now()+"\n");
                     break;
                 case "5":
-                    try {
-                        sv.createTournamentPlayer();
-                        fout.write("Create a tournament player,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createTournamentPlayer();
+                    fout.write("Add a player to a tournament,"+ LocalDateTime.now()+"\n");
                     break;
                 case "6":
-                    try {
-                        sv.deleteTournamentPlayer();
-                        fout.write("Delete a tournament player,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deleteTournamentPlayer();
+                    fout.write("Remove a player from a tournament,"+ LocalDateTime.now()+"\n");
                     break;
                 case "7":
-                    try {
-                        sv.startTournament();
-                        fout.write("Start a tournament,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.startTournament();
+                    fout.write("Start a tournament,"+ LocalDateTime.now()+"\n");
                     break;
                 case "8":
-                    try {
-                        sv.showRounds();
-                        fout.write("Show tournament's rounds,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showRounds();
+                    fout.write("Show tournament's rounds,"+ LocalDateTime.now()+"\n");
                     break;
                 case "9":
-                    try {
-                        sv.setPlayersPoints();
-                        fout.write("Set points to tournament players,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.setPlayersPoints();
+                    fout.write("Set points to tournament players,"+ LocalDateTime.now()+"\n");
                     break;
                 case "10":
-                    try {
-                        sv.showRanking();
-                        fout.write("Show the tournament's ranking list,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showRanking();
+                    fout.write("Show the tournament's ranking list,"+ LocalDateTime.now()+"\n");
                     break;
                 case "11":
-                    try{
-                        sv.createTournamentArbiter();
-                        fout.write("Add a tournament arbiter,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createTournamentArbiter();
+                    fout.write("Add a tournament arbiter,"+ LocalDateTime.now()+"\n");
                     break;
                 case "12":
-                    try{
-                        sv.showTournamentArbiters();
-                        fout.write("Show tournament's arbiters,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showTournamentArbiters();
+                    fout.write("Show tournament's arbiters,"+ LocalDateTime.now()+"\n");
                     break;
                 case "13":
-                    try{
-                        sv.showAllPlayers();
-                        fout.write("Show all players,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showAllPlayers();
+                    fout.write("Show all players,"+ LocalDateTime.now()+"\n");
                     break;
                 case "14":
-                    try{
-                        sv.showAllArbiters();
-                        fout.write("Show all arbiters,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showAllArbiters();
+                    fout.write("Show all arbiters,"+ LocalDateTime.now()+"\n");
                     break;
                 case "15":
-                    try{
-                        sv.showAllOrganizers();
-                        fout.write("Show all organizers,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showAllOrganizers();
+                    fout.write("Show all organizers,"+ LocalDateTime.now()+"\n");
                     break;
                 case "16":
-                    try{
-                        sv.showAllPeople();
-                        fout.write("Show all people,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.showAllPeople();
+                    fout.write("Show all people,"+ LocalDateTime.now()+"\n");
                     break;
                 case "17":
-                    try{
-                        sv.updatePerson();
-                        fout.write("Update a person,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.updatePerson();
+                    fout.write("Update a person,"+ LocalDateTime.now()+"\n");
                     break;
                 case "18":
-                    try{
-                        sv.createPlayer();
-                        fout.write("Create a player,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createPlayer();
+                    fout.write("Create a player,"+ LocalDateTime.now()+"\n");
                     break;
                 case "19":
-                    try{
-                        sv.createArbiter();
-                        fout.write("Create an arbiter,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createArbiter();
+                    fout.write("Create an arbiter,"+ LocalDateTime.now()+"\n");
                     break;
                 case "20":
-                    try{
-                        sv.createOrganizer();
-                        fout.write("Create an organizer,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createOrganizer();
+                    fout.write("Create an organizer,"+ LocalDateTime.now()+"\n");
                     break;
                 case "21":
-                    try{
-                        sv.createPerson();
-                        fout.write("Create a person,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.createPerson();
+                    fout.write("Create a person,"+ LocalDateTime.now()+"\n");
                     break;
                 case "22":
-                    try{
-                        sv.deletePlayer();
-                        fout.write("Delete a player,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deletePlayer();
+                    fout.write("Delete a player,"+ LocalDateTime.now()+"\n");
                     break;
                 case "23":
-                    try{
-                        sv.deleteArbiter();
-                        fout.write("Delete an arbiter,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deleteArbiter();
+                    fout.write("Delete an arbiter,"+ LocalDateTime.now()+"\n");
                     break;
                 case "24":
-                    try{
-                        sv.deleteOrganizer();
-                        fout.write("Delete an organizer,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deleteOrganizer();
+                    fout.write("Delete an organizer,"+ LocalDateTime.now()+"\n");
                     break;
                 case "25":
-                    try{
-                        sv.deletePerson();
-                        fout.write("Delete a person,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deletePerson();
+                    fout.write("Delete a person,"+ LocalDateTime.now()+"\n");
                     break;
                 case "26":
-                    try{
-                        sv.updatePlayer();
-                        fout.write("Update a player,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.updatePlayer();
+                    fout.write("Update a player,"+ LocalDateTime.now()+"\n");
                     break;
                 case "27":
-                    try{
-                        sv.updateArbiter();
-                        fout.write("Update an arbiter,"+ LocalDateTime.now()+"\n");
+                    sv.updateArbiter();
+                    fout.write("Update an arbiter,"+ LocalDateTime.now()+"\n");
 
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
                     break;
                 case "28":
-                    try{
-                        sv.updateOrganizer();
-                        fout.write("Update an organizer,"+ LocalDateTime.now()+"\n");
+                    sv.updateOrganizer();
+                    fout.write("Update an organizer,"+ LocalDateTime.now()+"\n");
 
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
                     break;
                 case "29":
                     try{
@@ -315,5 +209,7 @@ public class Main {
         }
 
         fout.close();
+
+        System.out.println("Type a valid option: "+ Arrays.toString(PlayerTitle.values()));
     }
 }

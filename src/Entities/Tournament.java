@@ -29,7 +29,7 @@ public class Tournament {
     public Tournament(String name, int organizerId){
         this.name=name;
         this.organizerId=organizerId;
-        this.id= IDGenerator.getTournamentId();
+        //this.id= IDGenerator.getTournamentId();
     }
 
     public int getId(){
@@ -151,12 +151,14 @@ public class Tournament {
 
     public void pairingSystem() {
 
-        ranking = new TreeSet<>(Comparator.reverseOrder());;
+        if(startingList.size()>=5){
+        ranking = new TreeSet<>(Comparator.reverseOrder());
+
         for (TournamentPlayer player : startingList) {
             TournamentPlayer playerCopy = new TournamentPlayer(player.getLastName(), player.getFirstName(), player.getRating());
             ranking.add(playerCopy);
         }
-        noRounds=(startingList.size()%2==1)? startingList.size() : startingList.size()-1;
+        noRounds = (startingList.size() % 2 == 1) ? startingList.size() : startingList.size() - 1;
 
         rounds = new ArrayList<>();
         for (int i = 0; i < noRounds; i++) {
@@ -256,5 +258,11 @@ public class Tournament {
                 }
             }
         }
+
+        System.out.println("Tournament has been started!");
+    }
+    else {
+        throw new IllegalStateException("Not enough players in the tournament! Minimum 5 players.");
+    }
     }
 }
