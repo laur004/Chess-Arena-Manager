@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServiceClass {
     private TournamentsManager tournamentsManager;
@@ -130,7 +131,7 @@ public class ServiceClass {
                     arbiterTitle = ArbiterTitle.valueOf(stringTitle);
                     isValid = true;
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Invalid title. Valid options: " + Arrays.toString(ArbiterTitle.values()) + "OR press ENTER to skip");
+                    System.out.println("Invalid title. Valid options: " + Arrays.toString(ArbiterTitle.values()) + " OR press ENTER to skip!");
                 }
             }
 
@@ -181,21 +182,52 @@ public class ServiceClass {
 
 
 
-
     public ServiceClass() {
         tournamentsManager = TournamentsManager.getInstance();
         scanner = new Scanner(System.in);
     }
 
-    public void createTournament() throws SQLException{
+
+    public void createTournament() {
         System.out.print("Tournament name: ");
         String tournamentName = scanner.nextLine();
-        System.out.print("Organizer's ID: ");
-        int organizerId = Integer.parseInt(scanner.nextLine());
-        TournamentService.getInstance().create(new Tournament(tournamentName, organizerId));
 
-        System.out.println("Tournament has been created!");
+        int organizerId=0;
+
+        boolean isValid = false;
+
+        while (!isValid){
+            try{
+                System.out.print("Organizer's ID: ");
+                organizerId = Integer.parseInt(scanner.nextLine());
+                isValid=true;
+
+            } catch (NumberFormatException e) {
+                System.out.println("Please introduce a valid ID!");
+            }
+
+        }
+
+        try{
+
+            Organizer organizer = OrganizerService.getInstance().readByOrganizerId(organizerId);
+            if(organizer==null){
+                System.out.println("There is no organizer with the ID: "+organizerId);
+            }
+            else {
+                TournamentService.getInstance().create(new Tournament(tournamentName, organizerId));
+
+                System.out.println("Tournament has been created!");
+            }
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+
     }
+
+
 
     public void deleteTournament() {
 
@@ -204,10 +236,17 @@ public class ServiceClass {
         try{
             int tournamentId = readValidTournamentId();
 
-            //remove from TournamentsManager
-            tournamentsManager.removeTournament(tournamentId);
-            //
-            TournamentService.getInstance().delete(tournamentId);
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null) {
+
+                //remove from TournamentsManager
+                tournamentsManager.removeTournament(tournamentId);
+                //
+                TournamentService.getInstance().delete(tournamentId);
+            }
+            else {
+                System.out.println("There is no tournament with the id: " + tournamentId);
+            }
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -217,10 +256,16 @@ public class ServiceClass {
     }
 
 
+
     public void showAllTournaments(){
 
         try{
             List<Tournament> tournamentsList=TournamentService.getInstance().readAll();
+
+
+            System.out.printf("%-5s | %-40s | %-30s%n", "ID", "Tournament Name", "Organizer");
+            System.out.println("---------------------------------------------------------------");
+
             tournamentsList.forEach(t->{
 
                 Organizer organizer;
@@ -229,15 +274,19 @@ public class ServiceClass {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                System.out.println("Tournament ID: "+t.getId()+
-                        " "+t.getName()+
-                        " organized by "+organizer);
+
+                    String organizerName = organizer.getFirstName() + " " + organizer.getLastName();
+                    System.out.printf("%-5d | %-40s | %-30s%n",
+                            t.getId(),
+                            t.getName(),
+                            organizerName);
 
             });
         } catch ( SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     public void showTournamentStartingList() {
 
@@ -246,14 +295,31 @@ public class ServiceClass {
         int tournamentId = readValidTournamentId();
 
             try {
-
-                List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
-                if (tournamentPlayerList.isEmpty()) {
-                    System.out.println("No players found for this tournament.");
-                    return;
+                Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+                if(tournament==null){
+                    System.out.println("There is no tournament with the id: " + tournamentId);
                 }
-                //or get starting list from tournament manager
-                tournamentPlayerList.stream().sorted((p1,p2)->p2.getRating()-p1.getRating()).forEach(System.out::println);
+                else{
+
+                    List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
+                    if (tournamentPlayerList.isEmpty()) {
+                        System.out.println("No players registered yet for this tournament.");
+                        return;
+                    }
+
+                    System.out.printf("%-4s | %-10s | %-25s | %-6s%n", "No.", "FIDE ID", "Name", "Rating");
+                    System.out.println("--------------------------------------------------------------");
+
+                    AtomicInteger index = new AtomicInteger(1);
+                    tournamentPlayerList.stream()
+                            .sorted((p1,p2)->p2.getRating()-p1.getRating())
+                            .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
+                                    index.getAndIncrement(),
+                                    player.getFideId(),
+                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getRating()));
+
+                }
 
             }catch (SQLException e){
                 e.printStackTrace();
@@ -261,40 +327,79 @@ public class ServiceClass {
 
     }
 
+
     public void createTournamentPlayer() {
 
         showAllTournaments();
 
         int tournamentId = readValidTournamentId();
 
-        List<TournamentPlayer> tournamentPlayerList=null;
-
         try {
-            tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if (tournament == null) {
+                System.out.println("There is no tournament with the id: " + tournamentId);
+            }
+            else {
+
+                if (tournamentsManager.getTournaments().containsKey(tournamentId)) {
+                    System.out.println("Tournament has already started!");
+                }
+                else {
+
+                    List<TournamentPlayer> tournamentPlayerList = null;
+
+                    tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
+
+
+                    if (tournamentPlayerList.isEmpty()) {
+                        System.out.println("No players registered yet for this tournament.");
+                    } else {
+
+
+                        System.out.printf("%-4s | %-10s | %-25s | %-6s%n", "No.", "FIDE ID", "Name", "Rating");
+                        System.out.println("--------------------------------------------------------------");
+
+                        AtomicInteger index = new AtomicInteger(1);
+                        tournamentPlayerList.stream()
+                                .sorted(Comparator.reverseOrder())
+                                .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
+                                        index.getAndIncrement(),
+                                        player.getFideId(),
+                                        player.getFirstName() + " " + player.getLastName(),
+                                        player.getRating()));
+
+
+
+                    }
+
+
+                    String fideId = readValidFideId();
+
+                    if (tournamentPlayerList.stream().anyMatch(tp -> tp.getFideId().equals(fideId))) {
+                        System.out.println("There is already a player in this tournament" +
+                                " with the FIDE ID: " + fideId);
+                    } else {
+
+                        if (PlayerService.getInstance().readByFideId(fideId) == null) {
+                            System.out.println("No player found with FIDE ID: " + fideId);
+                            return;
+                        }
+
+                        TournamentPlayerService.getInstance().create(fideId, tournamentId);
+
+                        System.out.println("Player was added to the tournament");
+                    }
+
+
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-
-        if (tournamentPlayerList.isEmpty()) {
-            System.out.println("No players found for this tournament.");
-        }
-        else{
-            tournamentPlayerList.stream().sorted(Comparator.reverseOrder()).forEach(System.out::println);
-        }
-
-
-        String fideId= readValidFideId();
-
-        try{
-            TournamentPlayerService.getInstance().create(fideId,tournamentId);
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-
-        System.out.println("Player was added to the tournament");
-
     }
+
+
 
     public void deleteTournamentPlayer() {
 
@@ -302,33 +407,63 @@ public class ServiceClass {
 
         int tournamentId = readValidTournamentId();
 
-        List<TournamentPlayer> tournamentPlayerList=null;
-
-        try{
-            tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-
-        if (tournamentPlayerList.isEmpty()) {
-            System.out.println("No players found for this tournament.");
-            return;
-        }
-        //or get starting list from tournament manager
-        tournamentPlayerList.stream()
-                .sorted(Comparator.reverseOrder())
-                .forEach((p)->System.out.println("FIDE ID: "+p.getFideId()+" "+p) );
-
-        String fideId=readValidFideId();
-
         try {
-            TournamentPlayerService.getInstance().delete(fideId,tournamentId);
-        }catch (SQLException e){
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if (tournament == null) {
+                System.out.println("There is no tournament with the id: " + tournamentId);
+            }
+            else {
+
+                if (tournamentsManager.getTournaments().containsKey(tournamentId)) {
+                    System.out.println("Tournament has already started!");
+                } else {
+
+
+                    List<TournamentPlayer> tournamentPlayerList = null;
+
+
+                    tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
+
+
+                    if (tournamentPlayerList.isEmpty()) {
+                        System.out.println("No players registered yet for this tournament.");
+                        return;
+                    }
+
+                    System.out.printf("%-4s | %-10s | %-25s | %-6s%n", "No.", "FIDE ID", "Name", "Rating");
+                    System.out.println("--------------------------------------------------------------");
+
+                    AtomicInteger index = new AtomicInteger(1);
+                    tournamentPlayerList.stream()
+                            .sorted(Comparator.reverseOrder()) // presupun că reverseOrder sortează după rating
+                            .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
+                                    index.getAndIncrement(),
+                                    player.getFideId(),
+                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getRating()));
+
+
+                    String fideId = readValidFideId();
+
+                    if (tournamentPlayerList.stream().anyMatch(tp -> tp.getFideId().equals(fideId))) {
+
+                        TournamentPlayerService.getInstance().delete(fideId, tournamentId);
+
+                        System.out.println("Player was removed from the tournament!");
+                    } else {
+                        System.out.println("There is no player with FIDE ID: " + fideId + " in this tournament.");
+                    }
+
+                }
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        System.out.println("Player was removed from the tournament!");
+
     }
+
+
 
     public void startTournament() {
 
@@ -336,14 +471,17 @@ public class ServiceClass {
 
         int tournamentId = readValidTournamentId();
 
-        if(tournamentsManager.getTournaments().containsKey(tournamentId)){
-            System.out.println("Tournament has already started!");
-        }
-        else {
-            try {
-                Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+        try{
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if (tournament == null) {
+                System.out.println("There is no tournament with the id: " + tournamentId);
+            }
+            else{
 
-                if (tournament != null) {
+                if(tournamentsManager.getTournaments().containsKey(tournamentId)){
+                    System.out.println("Tournament has already started!");
+                }
+                else {
 
                     List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService
                             .getInstance()
@@ -354,15 +492,18 @@ public class ServiceClass {
                     tournamentsManager.addTournament(tournament);
 
                 }
-            }catch (IllegalStateException e){
-                System.out.println(e.getMessage());
             }
-            catch (SQLException e){
-                e.printStackTrace();
-            }
+
+        } catch (IllegalStateException e){
+            System.out.println(e.getMessage());
+        }
+        catch (SQLException e){
+            e.printStackTrace();
         }
 
+
     }
+
 
     public void showRounds() {
 
@@ -370,14 +511,26 @@ public class ServiceClass {
 
         int tournamentId = readValidTournamentId();
 
-        if(!tournamentsManager.getTournaments().containsKey(tournamentId)){
-            System.out.println("Tournament has not started yet!");
-        }
-        else{
-            tournamentsManager.getTournaments().get(tournamentId).showRounds();
+        try {
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if (tournament != null) {
+
+                if (!tournamentsManager.getTournaments().containsKey(tournamentId)) {
+                    System.out.println("Tournament has not started yet!");
+                } else {
+                    tournamentsManager.getTournaments().get(tournamentId).showRounds();
+                }
+
+            } else {
+                System.out.println("There is no tournament with the id: " + tournamentId);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
     }
+
 
     public void setPlayersPoints() {
 
@@ -385,34 +538,67 @@ public class ServiceClass {
 
         int tournamentId = readValidTournamentId();
 
-        if(!tournamentsManager.getTournaments().containsKey(tournamentId)){
-            System.out.println("Tournament has not started yet!");
-        }
-        else{
-            try {
-                tournamentsManager.getTournaments().get(tournamentId).showRounds();
+        try{
+
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null){
+
+                if(!tournamentsManager.getTournaments().containsKey(tournamentId)){
+                    System.out.println("Tournament has not started yet!");
+                }
+                else{
+
+                    tournamentsManager.getTournaments().get(tournamentId).showRounds();
 
 
-                List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService
-                        .getInstance()
-                        .readAllByTournamentId(tournamentId);
+                    List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService
+                            .getInstance()
+                            .readAllByTournamentId(tournamentId);
 
-                tournamentPlayerList.forEach(p->{
-                    System.out.println(p);
-                    System.out.print("Set points: ");
-                    double points = Double.parseDouble(scanner.nextLine());
-                    p.setPoints(points);
-                });
 
-                TournamentPlayerService.getInstance().updateAllTournamentPlayersPoints(tournamentId,tournamentPlayerList);
 
-            }catch (SQLException e){
-                e.printStackTrace();
+                    tournamentPlayerList.forEach(p -> {
+                        System.out.println(p);
+                        double points = -1;
+
+                        boolean valid = false;
+                        while (!valid) {
+                            System.out.print("Set points: ");
+                            try {
+                                points = Double.parseDouble(scanner.nextLine());
+
+                                if (points >= 0 && (points * 2) % 1 == 0) {
+                                    valid = true;
+                                } else {
+                                    System.out.println("Please enter a valid number (0, 0.5, 1, 1.5, ...).");
+                                }
+
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input. Please enter a number.");
+                            }
+                        }
+
+                        p.setPoints(points);
+                    });
+
+
+
+
+                    TournamentPlayerService.getInstance().updateAllTournamentPlayersPoints(tournamentId,tournamentPlayerList);
+
+                }
+
+            }
+            else{
+                System.out.println("There is no tournament with the id: "+tournamentId);
             }
 
+        }catch (SQLException e){
+            e.printStackTrace();
         }
 
     }
+
 
     public void showRanking() {
 
@@ -420,23 +606,47 @@ public class ServiceClass {
 
         int tournamentId = readValidTournamentId();
 
-        if(!tournamentsManager.getTournaments().containsKey(tournamentId)){
-            System.out.println("Tournament has not started yet!");
-        }
-        else{
-            try {
-                List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
-                if (tournamentPlayerList.isEmpty()) {
-                    System.out.println("No players found for this tournament.");
-                    return;
-                }
-                //or get starting list from tournament manager
-                tournamentPlayerList.stream().sorted(Comparator.reverseOrder()).forEach(System.out::println);
+        try{
 
-            }catch (SQLException e){
-                e.printStackTrace();
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null){
+
+                if(!tournamentsManager.getTournaments().containsKey(tournamentId)){
+                    System.out.println("Tournament has not started yet!");
+                }
+                else{
+
+                    List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
+                    if (tournamentPlayerList.isEmpty()) {
+                        System.out.println("No players registered yet for this tournament.");
+                        return;
+                    }
+
+
+                    System.out.printf("%-4s | %-10s | %-25s | %-6s | %-4s%n", "No.", "FIDE ID", "Name", "Rating", "Points");
+                    System.out.println("--------------------------------------------------------------");
+
+                    AtomicInteger index = new AtomicInteger(1);
+                    tournamentPlayerList.stream()
+                            .sorted(Comparator.reverseOrder()) // presupun că reverseOrder sortează după rating
+                            .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6s | %-4s%n",
+                                    index.getAndIncrement(),
+                                    player.getFideId(),
+                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getRating(),
+                                    player.getPoints()
+                                    ));
+
+
+                }
+
+            }
+            else{
+                System.out.println("There is no tournament with the id: "+tournamentId);
             }
 
+        }catch (SQLException e){
+            e.printStackTrace();
         }
 
     }
@@ -448,20 +658,74 @@ public class ServiceClass {
         int tournamentId = readValidTournamentId();
 
         try {
-            List<TournamentArbiter> arbitersList = TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
-            if (!arbitersList.isEmpty()) {
-                System.out.println("Current tournament's arbiters:");
-                arbitersList.forEach(a -> System.out.println("FIDE ID: " + a.getFideId() + " " + a + " Role: " + a.getRole()));
-            } else {
-                System.out.println("This tournament has no arbiters yet!");
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null){
+
+                List<TournamentArbiter> arbitersList = TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
+                if (!arbitersList.isEmpty()) {
+                    System.out.println("Current tournament's arbiters:");
+
+
+                    System.out.printf("%-10s | %-25s | %-20s%n", "FIDE ID", "Name", "Role");
+                    System.out.println("----------------------------------------------------------");
+
+                    arbitersList.forEach(a -> {
+                        try {
+                            Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
+
+                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    fullName,
+                                    a.getRole());
+
+                        } catch (SQLException e) {
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    "[Arbiter not found]",
+                                    a.getRole());
+                        }
+                    });
+
+
+
+
+                } else {
+                    System.out.println("This tournament has no arbiters yet!");
+                }
+
+                System.out.println("Type Arbiter's FIDE ID");
+                String fideId = readValidFideId();
+
+
+                Arbiter arbiter = ArbiterService.getInstance().readByFideId(fideId);
+                if(arbiter==null){
+                    System.out.println("There is no arbiter registered with the id: "+fideId);
+                    return;
+                }
+
+                if(arbitersList.stream()
+                                    .noneMatch(a->a.getFideId().equals(fideId)))
+                {
+                    System.out.println("Type Arbiter's role: ");
+                    String role = scanner.nextLine();
+
+                    TournamentArbiterService.getInstance().create(new TournamentArbiter(
+                            fideId, tournamentId, role)
+                    );
+                }
+                else{
+                    System.out.println("There is already an arbiter in this tournament" +
+                            " with the FIDE ID: "+fideId);
+                }
+
+            }
+            else{
+                System.out.println("There is no tournament with the id: "+tournamentId);
             }
 
-            System.out.println("Type Arbiter's FIDE ID: ");
-            String fideId = scanner.nextLine();
-            System.out.println("Type Arbiter's role: ");
-            String role = scanner.nextLine();
 
-            TournamentArbiterService.getInstance().create(new TournamentArbiter(fideId, tournamentId, role));
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -470,26 +734,70 @@ public class ServiceClass {
     }
 
 
-    public void deleteTournamentArbiter() throws SQLException {
+    public void deleteTournamentArbiter() {
         showAllTournaments();
-        System.out.print("Type Tournament's ID: ");
-        int tournamentId = Integer.parseInt(scanner.nextLine());
 
-        List<TournamentArbiter> arbitersList= TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
-        if(!arbitersList.isEmpty()){
-            System.out.println("Current tournament's arbiters:");
-            arbitersList.forEach(a-> System.out.println("FIDE ID: "+a.getFideId()+" "+a+" Role: "+a.getRole()));
+        int tournamentId = readValidTournamentId();
+
+        try {
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null){
+
+
+                List<TournamentArbiter> arbitersList= TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
+                if(!arbitersList.isEmpty()){
+                    System.out.println("Current tournament's arbiters:");
+
+
+                    System.out.printf("%-10s | %-25s | %-20s%n", "FIDE ID", "Name", "Role");
+                    System.out.println("----------------------------------------------------------");
+
+                    arbitersList.forEach(a -> {
+                        try {
+                            Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
+
+                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    fullName,
+                                    a.getRole());
+
+                        } catch (SQLException e) {
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    "[Arbiter not found]",
+                                    a.getRole());
+                        }
+                    });
+
+
+                }
+                else{
+                    System.out.println("This tournament has no arbiters yet!");
+                    return;
+                }
+
+                System.out.println("Type Arbiter's FIDE ID");
+                String fideId = readValidFideId();
+
+                if(arbitersList.stream()
+                        .anyMatch(a -> a.getFideId().equals(fideId))){
+                    TournamentArbiterService.getInstance().delete(fideId,tournamentId);
+                }
+                else{
+                    System.out.println("There is no arbiter in this tournament with the id: "+fideId);
+                }
+
+            }
+            else {
+                System.out.println("There is no tournament with the id: "+tournamentId);
+            }
+
+
+        }catch (SQLException e){
+            e.printStackTrace();
         }
-        else{
-            System.out.println("This tournament has no arbiters yet!");
-            return;
-        }
-
-        System.out.println("Type Arbiter's FIDE ID: ");
-        String fideId = scanner.nextLine();
-
-
-        TournamentArbiterService.getInstance().delete(fideId,tournamentId);
 
     }
 
@@ -500,8 +808,51 @@ public class ServiceClass {
         int tournamentId = readValidTournamentId();
 
         try {
-            List<TournamentArbiter> arbitersList= TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
-            arbitersList.forEach(a-> System.out.println("FIDE ID: "+a.getFideId()+" "+a+" Role: "+a.getRole()));
+            Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
+            if(tournament!=null){
+
+                List<TournamentArbiter> arbitersList= TournamentArbiterService.getInstance().readByTournamentId(tournamentId);
+
+
+
+                if(!arbitersList.isEmpty()){
+                    System.out.println("Current tournament's arbiters:");
+
+
+                    System.out.printf("%-10s | %-25s | %-20s%n", "FIDE ID", "Name", "Role");
+                    System.out.println("----------------------------------------------------------");
+
+                    arbitersList.forEach(a -> {
+                        try {
+                            Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
+
+                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    fullName,
+                                    a.getRole());
+
+                        } catch (SQLException e) {
+                            System.out.printf("%-10s | %-25s | %-20s%n",
+                                    a.getFideId(),
+                                    "[Arbiter not found]",
+                                    a.getRole());
+                        }
+                    });
+
+
+                }
+                else{
+                    System.out.println("This tournament has no arbiters yet!");
+                }
+
+
+            }
+            else {
+                System.out.println("There is no tournament with the id: "+tournamentId);
+            }
+
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -512,10 +863,28 @@ public class ServiceClass {
     public void showAllPlayers() {
 
         try{
+
+
             List<Player> playersList= PlayerService.getInstance().readAll();
+            if (playersList.isEmpty()) {
+                System.out.println("No players registered yet.");
+                return;
+            }
+
+
+            System.out.printf("%-4s | %-10s | %-25s | %-6s%n", "No.", "FIDE ID", "Name", "Rating");
+            System.out.println("--------------------------------------------------------------");
+
+            AtomicInteger index = new AtomicInteger(1);
             playersList.stream()
                     .sorted((p1,p2)->p2.getRating()- p1.getRating())
-                    .forEach(p-> System.out.println("FIDE ID: "+p.getFideId()+" "+p));
+                    .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6s%n",
+                            index.getAndIncrement(),
+                            player.getFideId(),
+                            player.getFirstName() + " " + player.getLastName(),
+                            player.getRating()
+                    ));
+
         }
         catch (SQLException e){
             e.printStackTrace();
@@ -523,43 +892,98 @@ public class ServiceClass {
 
     }
 
-    public void showAllArbiters(){
+    public void showAllArbiters() {
+        try {
+            List<Arbiter> arbitersList = ArbiterService.getInstance().readAll();
 
-        try{
-            List<Arbiter> arbitersList= ArbiterService.getInstance().readAll();
-            arbitersList.forEach(a-> System.out.println("FIDE ID: "+a.getFideId()+" "+a));
+            if (arbitersList.isEmpty()) {
+                System.out.println("No arbiters registered yet.");
+                return;
+            }
 
-        }catch (SQLException e){
+            System.out.printf("%-4s | %-10s | %-25s | %-20s%n", "No.", "FIDE ID", "Name", "Title");
+            System.out.println("---------------------------------------------------------------");
+
+            AtomicInteger index = new AtomicInteger(1);
+            arbitersList.forEach(a -> {
+                String fullName = a.getFirstName() + " " + a.getLastName();
+                String title = a.getTitle() != null ? a.getTitle().toString() : "-";
+
+                System.out.printf("%-4d | %-10s | %-25s | %-20s%n",
+                        index.getAndIncrement(),
+                        a.getFideId(),
+                        fullName,
+                        title);
+            });
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
+
 
     public void showAllOrganizers() {
+        try {
+            List<Organizer> organizersList = OrganizerService.getInstance().readAll();
 
-        try{
-            List<Organizer> organizersList=OrganizerService.getInstance().readAll();
-            organizersList.forEach(o-> System.out.println("ID: "+o.getPersonId()+" "+o+" Phone Number: "+
-                    o.getPhoneNumber()+" Email: "+o.getEmail()));
-        }catch (SQLException e){
+            if (organizersList.isEmpty()) {
+                System.out.println("No organizers found.");
+                return;
+            }
+
+            System.out.printf("%-4s | %-5s | %-25s | %-15s | %-30s%n",
+                    "No.", "ID", "Name", "Phone Number", "Email");
+            System.out.println("-------------------------------------------------------------------------------");
+
+            AtomicInteger index = new AtomicInteger(1);
+            organizersList.forEach(o -> {
+                String fullName = o.getFirstName() + " " + o.getLastName();
+                String phone = o.getPhoneNumber() != null ? o.getPhoneNumber() : "-";
+                String email = o.getEmail() != null ? o.getEmail() : "-";
+
+                System.out.printf("%-4d | %-5d | %-25s | %-15s | %-30s%n",
+                        index.getAndIncrement(),
+                        o.getPersonId(),
+                        fullName,
+                        phone,
+                        email);
+            });
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
     }
+
 
     public void showAllPeople() {
+        try {
+            List<Person> peopleList = PersonService.getInstance().readAll();
 
-        try{
-            List<Person> peopleList= PersonService.getInstance().readAll();
-            peopleList.forEach(p-> System.out.println("Person ID: "+p.getPersonId()+" "+p+" FIDE ID: "+p.getFideId()));
+            if (peopleList.isEmpty()) {
+                System.out.println("No people found.");
+                return;
+            }
 
-        }catch (SQLException e){
+            System.out.printf("%-4s | %-5s | %-25s | %-13s%n", "No.", "ID", "Name", "FIDE ID");
+            System.out.println("----------------------------------------------------------");
+
+            AtomicInteger index = new AtomicInteger(1);
+            peopleList.forEach(p -> {
+                String fullName = p.getFirstName() + " " + p.getLastName();
+                String fideId = p.getFideId() != null ? p.getFideId() : "-";
+
+                System.out.printf("%-4d | %-5d | %-25s | %-13s%n",
+                        index.getAndIncrement(),
+                        p.getPersonId(),
+                        fullName,
+                        fideId);
+            });
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
     }
+
 
     public void updatePerson() {
         showAllPeople();
@@ -579,81 +1003,150 @@ public class ServiceClass {
             }
         }
 
-        System.out.print("First name: ");
-        String fn = scanner.nextLine();
-        System.out.print("Last name: ");
-        String ln = scanner.nextLine();
-
-        String fideId="";
-
-        isValid=false;
-        while(!isValid){
-            System.out.print("FIDE ID: ");
-            fideId = scanner.nextLine();
-            if(fideId.matches("[0-9]{1,13}|") || fideId.isEmpty()){
-                isValid=true;
-            }
-            else{
-                System.out.println("Invalid FIDE ID! Introduce a valid one OR press ENTER to skip");
-            }
-        }
-
-        fideId = fideId.isEmpty()?null:fideId;
-
 
         try{
-            PersonService.getInstance().update(personId,fn,ln,fideId);
+            Person person = PersonService.getInstance().readByPersonId(personId);
+            if(person!=null){
+
+                System.out.print("First name: ");
+                String fn = scanner.nextLine();
+                System.out.print("Last name: ");
+                String ln = scanner.nextLine();
+
+                String fideId="";
+
+                Player player = PlayerService.getInstance().readByFideId(person.getFideId());
+                Arbiter arbiter = ArbiterService.getInstance().readByFideId(person.getFideId());
+
+                if(player==null && arbiter==null){
+
+                    isValid=false;
+                    while(!isValid){
+                        System.out.print("FIDE ID: ");
+                        fideId = scanner.nextLine();
+                        if(fideId.matches("[0-9]{1,13}|") || fideId.isEmpty()){
+                            isValid=true;
+                        }
+                        else{
+                            System.out.println("Invalid FIDE ID! Introduce a valid one OR press ENTER to skip");
+                        }
+                    }
+
+                    fideId = fideId.isEmpty()?null:fideId;
+
+                    PersonService.getInstance().update(personId,fn,ln,fideId);
+
+                }
+                else{
+                    System.out.println("If you wanted to edit the FIDE ID: ");
+                    if(player!=null){
+                        System.out.println("Can not edit FIDE ID because he is a "+
+                                "registered player!");
+                        System.out.println("If you still want to edit his FIDE ID, firstly you must delete " +
+                                "him from the players registry!");
+                    }
+                    if(arbiter!=null){
+                        System.out.println("Can not edit FIDE ID because he is a "+
+                                "registered arbiter!");
+                        System.out.println("If you still want to edit his FIDE ID, firstly you must delete " +
+                                "him from the arbiters registry!");
+                    }
+
+                    PersonService.getInstance().update(personId,fn,ln,person.getFideId());
+                }
+            }
+            else{
+                System.out.println("There is no person registered with the id: "+personId);
+            }
+
+
         }catch (SQLException e){
             e.printStackTrace();
         }
 
-
-
     }
+
+
 
     public void createPlayer() {
 
         String fideId=readValidFideId();
 
-        PlayerTitle title= readValidPlayerTitle();
-
-        int rating = readValidFideRating();
-
-
         try{
-            if(title!=null) {
-                PlayerService.getInstance().create(new Player(fideId, title, rating));
+            Person person = PersonService.getInstance().readByFideId(fideId);
+            if(person!=null) {
+
+                Player player = PlayerService.getInstance().readByFideId(fideId);
+                if(player==null){
+
+                    int rating = readValidFideRating();
+
+                    PlayerTitle title= readValidPlayerTitle();
+
+                    if (title != null) {
+                        PlayerService.getInstance().create(new Player(fideId, title, rating));
+                    } else {
+                        PlayerService.getInstance().create(new Player(fideId, (PlayerTitle) null, rating));
+                    }
+
+                }
+                else{
+                    System.out.println("There is already a player with the FIDE ID: "+fideId);
+                }
+
             }
             else{
-                PlayerService.getInstance().create(new Player(fideId, (PlayerTitle) null, rating));
+                System.out.println("There is no person with the FIDE ID: "+fideId);
             }
 
         }catch (SQLException e){
             e.printStackTrace();
         }
     }
+
 
     public void createArbiter(){
 
         String fideId=readValidFideId();
 
-        ArbiterTitle arbiterTitle = readValidArbiterTitle();
-
         try{
-            if(arbiterTitle==null){
-                ArbiterService.getInstance().create(new Arbiter(fideId, arbiterTitle));
+
+            Person person = PersonService.getInstance().readByFideId(fideId);
+            if(person!=null){
+
+                Arbiter arbiter = ArbiterService.getInstance().readByFideId(fideId);
+                if(arbiter==null){
+                    ArbiterTitle arbiterTitle = readValidArbiterTitle();
+
+                    if(arbiterTitle==null){
+                        ArbiterService.getInstance().create(new Arbiter(fideId, arbiterTitle));
+                    }
+                    else{
+                        ArbiterService.getInstance().create(new Arbiter(fideId, (ArbiterTitle) null));
+                    }
+
+                }
+                else{
+                    System.out.println("There is already an arbiter with the FIDE ID: "+fideId);
+                }
             }
-            else{
-                ArbiterService.getInstance().create(new Arbiter(fideId, (ArbiterTitle) null));
+            else {
+                System.out.println("There is no person with the FIDE ID: "+fideId);
             }
 
-        }catch (SQLException e){
+
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+
     }
+
+
 
     public void createOrganizer(){
 
+        //it's actually the personID
         int organizerId=0;
 
         boolean isValid = false;
@@ -669,22 +1162,36 @@ public class ServiceClass {
             }
         }
 
+        //verify if there is already an organizer with that id.
+
+        try {
+            Person person = PersonService.getInstance().readByPersonId(organizerId);
+            if(person!=null){
+
+                Organizer organizer = OrganizerService.getInstance().readByOrganizerId(organizerId);
+                if (organizer==null) {
+
+                    String phoneNumber= readValidPhoneNumber();
+                    phoneNumber = phoneNumber.isEmpty() ?null:phoneNumber;
+
+                    String email=readValidEmail();
+                    email = email.isEmpty() ?null:email;
+
+                    OrganizerService.getInstance().create(new Organizer(organizerId,phoneNumber,email));
+
+                } else {
+                    System.out.println("There is already an organizer with the ID: "+organizerId);
+                }
+
+            }
+            else{
+                System.out.println("There is no person with the ID: "+organizerId);
+            }
 
 
-        String phoneNumber= readValidPhoneNumber();
-        phoneNumber = phoneNumber.isEmpty() ?null:phoneNumber;
-
-        String email=readValidEmail();
-        email = email.isEmpty() ?null:email;
-
-
-        try{
-            OrganizerService.getInstance().create(new Organizer(organizerId,phoneNumber,email));
-
-        }catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-
 
     }
 
@@ -702,8 +1209,23 @@ public class ServiceClass {
             System.out.print("Type FIDE ID: ");
             fideId= scanner.nextLine();
 
-            if(fideId.matches("[0-9]{1,13}") || fideId.isEmpty()){
+            if(fideId.isEmpty()){
                 isValid=true;
+            }
+            else if(fideId.matches("[0-9]{1,13}")){
+                try {
+                    Person person = PersonService.getInstance().readByFideId(fideId);
+                    if(person==null){
+                        isValid=true;
+                    }
+                    else{
+                        System.out.println("There is already a person with the FIDE ID: "+fideId);
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
             }
             else{
                 System.out.println("Please introduce a valid fide ID OR press ENTER to skip!");
@@ -738,12 +1260,14 @@ public class ServiceClass {
 
                 if(tournamentList.isEmpty()){
                     PlayerService.getInstance().delete(fideId);
+
+                    System.out.println("Player was deleted!");
                 }
                 else{
                     System.out.println("Can not delete the player because there are " +
                             tournamentList.size() +" tournaments that he plays in.");
-                    System.out.println("If you still want to delete him, firstly you must delete " +
-                            "all the tournaments that he plays in.");
+                    System.out.println("If you still want to delete him, firstly you must delete him " +
+                            "from all the tournaments that he plays in.");
                     System.out.print("Tournament IDs: ");
                     tournamentList.forEach(t-> System.out.print(t.getId()+" ") );
                     System.out.println();
@@ -779,8 +1303,8 @@ public class ServiceClass {
                 else{
                     System.out.println("Can not delete the arbiter because there are " +
                             tournamentList.size() +" tournaments arbitrated by him.");
-                    System.out.println("If you still want to delete him, firstly you must delete " +
-                            "all the tournaments arbitrated by him!");
+                    System.out.println("If you still want to delete him, firstly you must delete him " +
+                            "from all the tournaments arbitrated by him!");
                     System.out.print("Tournament IDs: ");
                     tournamentList.forEach(t-> System.out.print(t.getId()+" ") );
                     System.out.println();
@@ -941,13 +1465,6 @@ public class ServiceClass {
             e.printStackTrace();
         }
 
-//        try{
-//            PlayerService.getInstance().updateTitle(fideId, title);
-//            PlayerService.getInstance().updateRating(fideId,rating);
-//
-//        }catch (SQLException e){
-//            e.printStackTrace();
-//        }
 
     }
 

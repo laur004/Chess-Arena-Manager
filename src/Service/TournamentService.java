@@ -67,7 +67,7 @@ public class TournamentService{
             return new Tournament(id, name, organizerId);
         }
 
-        System.err.println("Tournament with ID: " + tournamentId + " doesn't exist!");
+        //System.err.println("Tournament with ID: " + tournamentId + " doesn't exist!");
         return null;
     }
 

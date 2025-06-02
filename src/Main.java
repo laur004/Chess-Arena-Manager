@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -40,10 +41,10 @@ public class Main {
             System.out.println("4. Show the starting list of a registered tournament");
             System.out.println("5. Add a player to a tournament");
             System.out.println("6. Remove a player from a tournament by FIDE ID");
-            System.out.println("7. Start a tournament??");
-            System.out.println("8. Show the pairings??");
-            System.out.println("9. Set points to each player??");
-            System.out.println("10. Show the tournament ranking list??");
+            System.out.println("7. Start a tournament");
+            System.out.println("8. Show the pairings");
+            System.out.println("9. Set points to each player");
+            System.out.println("10. Show the tournament ranking list");
             System.out.println("11. Add an arbiter to a tournament");
             System.out.println("12. Show the tournament's arbiters");
             System.out.println("13. Show all players");
@@ -70,133 +71,125 @@ public class Main {
             switch (option) {
                 case "0":
                     stop = true;
-                    fout.write("Exit App,"+ LocalDateTime.now()+"\n");
+                    fout.write("Exit App,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "1":
                     sv.showAllTournaments();
-                    fout.write("Show all tournaments,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show all tournaments,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "2":
-                    try {
                     sv.createTournament();
-                    fout.write("Create a tournament,"+ LocalDateTime.now()+"\n");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                break;
+                    fout.write("Create a tournament,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
+                    break;
                 case "3":
                     sv.deleteTournament();
-                    fout.write("Delete a tournament,"+ LocalDateTime.now()+"\n");
+                    fout.write("Delete a tournament,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "4":
                     sv.showTournamentStartingList();
-                    fout.write("Show tournament's starting list,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show tournament's starting list,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "5":
                     sv.createTournamentPlayer();
-                    fout.write("Add a player to a tournament,"+ LocalDateTime.now()+"\n");
+                    fout.write("Add a player to a tournament,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "6":
                     sv.deleteTournamentPlayer();
-                    fout.write("Remove a player from a tournament,"+ LocalDateTime.now()+"\n");
+                    fout.write("Remove a player from a tournament,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "7":
                     sv.startTournament();
-                    fout.write("Start a tournament,"+ LocalDateTime.now()+"\n");
+                    fout.write("Start a tournament,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "8":
                     sv.showRounds();
-                    fout.write("Show tournament's rounds,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show tournament's rounds,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "9":
                     sv.setPlayersPoints();
-                    fout.write("Set points to tournament players,"+ LocalDateTime.now()+"\n");
+                    fout.write("Set points to tournament players,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "10":
                     sv.showRanking();
-                    fout.write("Show the tournament's ranking list,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show the tournament's ranking list,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "11":
                     sv.createTournamentArbiter();
-                    fout.write("Add a tournament arbiter,"+ LocalDateTime.now()+"\n");
+                    fout.write("Add a tournament arbiter,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "12":
                     sv.showTournamentArbiters();
-                    fout.write("Show tournament's arbiters,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show tournament's arbiters,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "13":
                     sv.showAllPlayers();
-                    fout.write("Show all players,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show all players,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "14":
                     sv.showAllArbiters();
-                    fout.write("Show all arbiters,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show all arbiters,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "15":
                     sv.showAllOrganizers();
-                    fout.write("Show all organizers,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show all organizers,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "16":
                     sv.showAllPeople();
-                    fout.write("Show all people,"+ LocalDateTime.now()+"\n");
+                    fout.write("Show all people,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "17":
                     sv.updatePerson();
-                    fout.write("Update a person,"+ LocalDateTime.now()+"\n");
+                    fout.write("Update a person,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "18":
                     sv.createPlayer();
-                    fout.write("Create a player,"+ LocalDateTime.now()+"\n");
+                    fout.write("Create a player,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "19":
                     sv.createArbiter();
-                    fout.write("Create an arbiter,"+ LocalDateTime.now()+"\n");
+                    fout.write("Create an arbiter,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "20":
                     sv.createOrganizer();
-                    fout.write("Create an organizer,"+ LocalDateTime.now()+"\n");
+                    fout.write("Create an organizer,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "21":
                     sv.createPerson();
-                    fout.write("Create a person,"+ LocalDateTime.now()+"\n");
+                    fout.write("Create a person,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "22":
                     sv.deletePlayer();
-                    fout.write("Delete a player,"+ LocalDateTime.now()+"\n");
+                    fout.write("Delete a player,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "23":
                     sv.deleteArbiter();
-                    fout.write("Delete an arbiter,"+ LocalDateTime.now()+"\n");
+                    fout.write("Delete an arbiter,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "24":
                     sv.deleteOrganizer();
-                    fout.write("Delete an organizer,"+ LocalDateTime.now()+"\n");
+                    fout.write("Delete an organizer,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) +"\n");
                     break;
                 case "25":
                     sv.deletePerson();
-                    fout.write("Delete a person,"+ LocalDateTime.now()+"\n");
+                    fout.write("Delete a person,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) +"\n");
                     break;
                 case "26":
                     sv.updatePlayer();
-                    fout.write("Update a player,"+ LocalDateTime.now()+"\n");
+                    fout.write("Update a player,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 case "27":
                     sv.updateArbiter();
-                    fout.write("Update an arbiter,"+ LocalDateTime.now()+"\n");
+                    fout.write("Update an arbiter,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
 
                     break;
                 case "28":
                     sv.updateOrganizer();
-                    fout.write("Update an organizer,"+ LocalDateTime.now()+"\n");
+                    fout.write("Update an organizer,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
 
                     break;
                 case "29":
-                    try{
-                        sv.deleteTournamentArbiter();
-                        fout.write("Delete a tournament arbiter,"+ LocalDateTime.now()+"\n");
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    sv.deleteTournamentArbiter();
+                    fout.write("Delete a tournament arbiter,"+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))+"\n");
                     break;
                 default:
                     System.err.println("Non-valid option! Choose again");
