@@ -73,6 +73,35 @@ public class TournamentService{
 
 
 
+    public List<Tournament> readAllByOrganizerId(int organizerId) throws SQLException{
+
+        String sql="SELECT * FROM tournament WHERE organizerId=?";
+        PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
+        ps.setInt(1, organizerId);
+
+        ResultSet rs= ps.executeQuery();
+
+        List<Tournament> list = new ArrayList<>();
+        while(rs.next()){
+            String sql2 = "SELECT o.organizerId, p.firstName, p.lastName, o.phoneNumber, o.email " +
+                    "FROM organizer o JOIN person p ON o.organizerId = p.personId " +
+                    "WHERE o.organizerId = ?";
+
+            PreparedStatement ps2= DatabaseUtils.getConnection().prepareStatement(sql2);
+            ps2.setInt(1,rs.getInt("organizerId"));
+            ResultSet rs2 = ps2.executeQuery();
+            if(rs2.next()){
+                list.add(new Tournament(rs.getInt(1),
+                        rs.getString(2),rs2.getInt("organizerId"))
+                );
+            }
+
+        }
+        return list;
+    }
+
+
+
 
     public void updateName(int tournamentId, String newName) throws SQLException {
         String sql = "UPDATE tournament SET name = ? WHERE tournamentId = ?";

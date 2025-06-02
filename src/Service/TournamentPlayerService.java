@@ -2,6 +2,7 @@ package Service;
 
 import Entities.Player;
 import Entities.PlayerTitle;
+import Entities.Tournament;
 import Entities.TournamentPlayer;
 import Utils.DatabaseUtils;
 
@@ -96,6 +97,24 @@ public class TournamentPlayerService {
                 ));
             }
 
+        return list;
+    }
+
+
+    public List<Tournament> readAllTournamentsByPlayerId(String fideId) throws SQLException{
+
+        String sql= "SELECT tp.tournamentId FROM tournamentplayer tp " +
+                "JOIN tournament t ON tp.tournamentId=t.tournamentId "+
+                "WHERE fideId=? ";
+        PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
+        ps.setString(1, fideId);
+
+        ResultSet rs= ps.executeQuery();
+
+        List<Tournament> list = new ArrayList<>();
+        while(rs.next()){
+            list.add(TournamentService.getInstance().readByTournamentId(rs.getInt("tournamentId")));
+        }
         return list;
     }
 

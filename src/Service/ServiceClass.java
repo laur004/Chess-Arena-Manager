@@ -76,7 +76,7 @@ public class ServiceClass {
                     title = PlayerTitle.valueOf(titleString);
                     isValid = true;
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Invalid title. Valid options: " + Arrays.toString(PlayerTitle.values()));
+                    System.out.println("Invalid title. Valid options: " + Arrays.toString(PlayerTitle.values())+" OR press ENTER to skip!" );
                 }
             }
 
@@ -728,9 +728,32 @@ public class ServiceClass {
 
         String fideId=readValidFideId();
 
+        //verify if he plays in active tournaments
 
         try{
-            PlayerService.getInstance().delete(fideId);
+            Player player = PlayerService.getInstance().readByFideId(fideId);
+            if(player!=null) {
+
+                List<Tournament> tournamentList = TournamentPlayerService.getInstance().readAllTournamentsByPlayerId(fideId);
+
+                if(tournamentList.isEmpty()){
+                    PlayerService.getInstance().delete(fideId);
+                }
+                else{
+                    System.out.println("Can not delete the player because there are " +
+                            tournamentList.size() +" tournaments that he plays in.");
+                    System.out.println("If you still want to delete him, firstly you must delete " +
+                            "all the tournaments that he plays in.");
+                    System.out.print("Tournament IDs: ");
+                    tournamentList.forEach(t-> System.out.print(t.getId()+" ") );
+                    System.out.println();
+
+                }
+
+            }
+            else{
+                System.out.println("There is no player registered with the id: "+fideId);
+            }
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -743,8 +766,31 @@ public class ServiceClass {
 
         String fideId=readValidFideId();
 
+        //verify if he arbitrates tournaments
+
         try{
-            ArbiterService.getInstance().delete(fideId);
+            Arbiter arbiter = ArbiterService.getInstance().readByFideId(fideId);
+            if(arbiter!=null) {
+                List<Tournament> tournamentList = TournamentArbiterService.getInstance().readAllTournamentsByArbiterId(fideId);
+
+                if(tournamentList.isEmpty()){
+                    ArbiterService.getInstance().delete(fideId);
+                }
+                else{
+                    System.out.println("Can not delete the arbiter because there are " +
+                            tournamentList.size() +" tournaments arbitrated by him.");
+                    System.out.println("If you still want to delete him, firstly you must delete " +
+                            "all the tournaments arbitrated by him!");
+                    System.out.print("Tournament IDs: ");
+                    tournamentList.forEach(t-> System.out.print(t.getId()+" ") );
+                    System.out.println();
+
+                }
+
+            }
+            else{
+                System.out.println("There is no arbiter registered with the id: "+fideId);
+            }
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -770,13 +816,33 @@ public class ServiceClass {
             }
         }
 
+        try {
+            Organizer organizer = OrganizerService.getInstance().readByOrganizerId(organizerId);
+            if(organizer!=null){
 
-        try{
-            OrganizerService.getInstance().delete(organizerId);
+                List<Tournament> tournamentList = TournamentService.getInstance().readAllByOrganizerId(organizerId);
+                if (!tournamentList.isEmpty()) {
+                    System.out.println("Can not delete the organizer because there are " +
+                            tournamentList.size() +" tournaments organized by him.");
+                    System.out.println("If you still want to delete him, firstly you must delete " +
+                            "all the tournaments organized by him!");
+                    System.out.print("Tournament IDs: ");
+                    tournamentList.forEach(t-> System.out.print(t.getId()+" ") );
+                    System.out.println();
+                }
+                else{
+                    OrganizerService.getInstance().delete(organizerId);
+                }
 
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
+            }
+            else{
+                System.out.println("There is no organizer registered with the id: "+organizerId);
+            }
+
+
+        } catch (SQLException e) {
+                e.printStackTrace();
+            }
 
     }
 
@@ -800,7 +866,41 @@ public class ServiceClass {
         }
 
         try{
-            PersonService.getInstance().delete(personId);
+            Person person = PersonService.getInstance().readByPersonId(personId);
+            if(person!=null){
+
+                Organizer organizer = OrganizerService.getInstance().readByOrganizerId(personId);
+                Player player = PlayerService.getInstance().readByFideId(person.getFideId());
+                Arbiter arbiter = ArbiterService.getInstance().readByFideId(person.getFideId());
+
+                if(player==null && organizer==null && arbiter==null){
+                    PersonService.getInstance().delete(personId);
+                }
+                else{
+                    if(player!=null){
+                        System.out.println("Can not delete the person because he is a "+
+                                "registered player!");
+                        System.out.println("If you still want to delete him, firstly you must delete " +
+                                "him from the players registry!");
+                    }
+                    if(organizer!=null){
+                        System.out.println("Can not delete the person because he is a "+
+                                "registered organizer!");
+                        System.out.println("If you still want to delete him, firstly you must delete " +
+                                "him from the organizers registry!");
+                    }
+                    if(arbiter!=null){
+                        System.out.println("Can not delete the person because he is a "+
+                                "registered arbiter!");
+                        System.out.println("If you still want to delete him, firstly you must delete " +
+                                "him from the arbiters registry!");
+                    }
+                }
+            }
+            else{
+                System.out.println("There is no person registered with the id: "+personId);
+            }
+
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -814,32 +914,40 @@ public class ServiceClass {
 
         String fideId=readValidFideId();
 
-        PlayerTitle title= readValidPlayerTitle();
-
-        int rating = readValidFideRating();
-
-
         try{
-            if(title!=null) {
-                PlayerService.getInstance().create(new Player(fideId, title, rating));
+
+            Player player = PlayerService.getInstance().readByFideId(fideId);
+            if(player!=null){
+
+                PlayerTitle title= readValidPlayerTitle();
+
+                int rating = readValidFideRating();
+
+                if(title!=null) {
+                    PlayerService.getInstance().updateTitle(fideId, title);
+
+                }
+                else{
+                    PlayerService.getInstance().updateTitle(fideId, (PlayerTitle) null);
+                }
+
+                PlayerService.getInstance().updateRating(fideId, rating);
             }
-            else{
-                PlayerService.getInstance().create(new Player(fideId, (PlayerTitle) null, rating));
+            else {
+                System.out.println("There is no player registered with the id: "+fideId);
             }
 
         }catch (SQLException e){
             e.printStackTrace();
         }
 
-
-
-        try{
-            PlayerService.getInstance().updateTitle(fideId, title);
-            PlayerService.getInstance().updateRating(fideId,rating);
-
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
+//        try{
+//            PlayerService.getInstance().updateTitle(fideId, title);
+//            PlayerService.getInstance().updateRating(fideId,rating);
+//
+//        }catch (SQLException e){
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -850,14 +958,21 @@ public class ServiceClass {
 
         String fideId=readValidFideId();
 
-        ArbiterTitle arbiterTitle = readValidArbiterTitle();
-
         try{
-            if(arbiterTitle==null){
-                ArbiterService.getInstance().create(new Arbiter(fideId, arbiterTitle));
+            Arbiter arbiter = ArbiterService.getInstance().readByFideId(fideId);
+            if(arbiter!=null) {
+
+                ArbiterTitle arbiterTitle = readValidArbiterTitle();
+
+                if (arbiterTitle != null) {
+                    ArbiterService.getInstance().updateTitle(fideId, arbiterTitle);
+                } else {
+                    ArbiterService.getInstance().updateTitle(fideId, (ArbiterTitle) null);
+                }
+
             }
             else{
-                ArbiterService.getInstance().create(new Arbiter(fideId, (ArbiterTitle) null));
+                System.out.println("There is no arbiter registered with the id: "+fideId);
             }
 
         }catch (SQLException e){
@@ -886,15 +1001,22 @@ public class ServiceClass {
             }
         }
 
-        String phoneNumber= readValidPhoneNumber();
-        phoneNumber = phoneNumber.isEmpty() ?null:phoneNumber;
-
-        String email=readValidEmail();
-        email = email.isEmpty() ?null:email;
-
-
         try{
-            OrganizerService.getInstance().create(new Organizer(organizerId,phoneNumber,email));
+        Organizer organizer = OrganizerService.getInstance().readByOrganizerId(organizerId);
+        if(organizer!=null) {
+            String phoneNumber= readValidPhoneNumber();
+            phoneNumber = phoneNumber.isEmpty() ?null:phoneNumber;
+
+            String email=readValidEmail();
+            email = email.isEmpty() ?null:email;
+
+            OrganizerService.getInstance().updatePhoneNumber(organizerId,phoneNumber);
+            OrganizerService.getInstance().updateEmail(organizerId,email);
+
+        }
+        else{
+            System.out.println("There is no organizer registered with the id: "+organizerId);
+        }
 
         }catch (SQLException e){
             e.printStackTrace();

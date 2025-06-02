@@ -102,7 +102,12 @@ public class PlayerService {
     public void updateTitle(String fideId, PlayerTitle newTitle) throws SQLException {
         String sql = "UPDATE player SET title = ? WHERE fideId = ?";
         try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
-            ps.setString(1, newTitle.name());
+            if(newTitle!=null){
+                ps.setString(1, newTitle.name());
+            }
+            else{
+                ps.setString(1, null);
+            }
             ps.setString(2, fideId);
             ps.executeUpdate();
         }

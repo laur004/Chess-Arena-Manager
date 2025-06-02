@@ -210,6 +210,5 @@ public class Main {
 
         fout.close();
 
-        System.out.println("Type a valid option: "+ Arrays.toString(PlayerTitle.values()));
     }
 }

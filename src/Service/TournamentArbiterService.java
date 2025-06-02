@@ -2,6 +2,7 @@ package Service;
 
 import Entities.ArbiterTitle;
 import Entities.PlayerTitle;
+import Entities.Tournament;
 import Entities.TournamentArbiter;
 import Utils.DatabaseUtils;
 
@@ -98,6 +99,24 @@ public class TournamentArbiterService {
             }
         }
 
+        return list;
+    }
+
+
+    public List<Tournament> readAllTournamentsByArbiterId(String fideId) throws SQLException{
+
+        String sql= "SELECT ta.tournamentId FROM tournamentarbiter ta " +
+                    "JOIN tournament t ON ta.tournamentId=t.tournamentId "+
+                    "WHERE fideId=? ";
+        PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
+        ps.setString(1, fideId);
+
+        ResultSet rs= ps.executeQuery();
+
+        List<Tournament> list = new ArrayList<>();
+        while(rs.next()){
+                list.add(TournamentService.getInstance().readByTournamentId(rs.getInt("tournamentId")));
+        }
         return list;
     }
 

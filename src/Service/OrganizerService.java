@@ -70,10 +70,9 @@ public class OrganizerService {
             );
         }
 
-        System.err.println("Entities.Organizer with id: " + organizerId + " doesn't exist!");
+        //System.err.println("Organizer with id: " + organizerId + " doesn't exist!");
         return null;
     }
-
 
     public void updatePhoneNumber(int organizerId,String phoneNumber) throws SQLException{
         String sql = "UPDATE organizer SET phoneNumber=? WHERE organizerId=?";
