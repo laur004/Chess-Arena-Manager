@@ -2,12 +2,7 @@ package Service;
 
 import Entities.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -245,6 +240,17 @@ public class ServiceClass {
         showAllTournaments();
 
         try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+
+        try{
             int tournamentId = readValidTournamentId();
 
             Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
@@ -297,7 +303,7 @@ public class ServiceClass {
                 }
 
                 String organizerName = (organizer != null)
-                        ? organizer.getFirstName() + " " + organizer.getLastName()
+                        ? organizer.getLastName() + " " + organizer.getFirstName()
                         : "[Organizer not found]";
 
                 System.out.printf("%-5d | %-40s | %-30s%n",
@@ -317,6 +323,16 @@ public class ServiceClass {
     public void showTournamentStartingList() {
 
         showAllTournaments();
+
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int tournamentId = readValidTournamentId();
 
@@ -346,7 +362,7 @@ public class ServiceClass {
                             .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
                                     index.getAndIncrement(),
                                     player.getFideId(),
-                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getLastName() + " " + player.getFirstName(),
                                     player.getRating()));
 
 
@@ -362,6 +378,16 @@ public class ServiceClass {
     public void createTournamentPlayer() {
 
         showAllTournaments();
+
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int tournamentId = readValidTournamentId();
 
@@ -396,7 +422,7 @@ public class ServiceClass {
                                 .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
                                         index.getAndIncrement(),
                                         player.getFideId(),
-                                        player.getFirstName() + " " + player.getLastName(),
+                                        player.getLastName() + " " + player.getFirstName(),
                                         player.getRating()));
 
 
@@ -440,6 +466,16 @@ public class ServiceClass {
 
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         int tournamentId = readValidTournamentId();
 
         try {
@@ -474,7 +510,7 @@ public class ServiceClass {
                             .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6d%n",
                                     index.getAndIncrement(),
                                     player.getFideId(),
-                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getLastName() + " " + player.getFirstName(),
                                     player.getRating()));
 
 
@@ -508,6 +544,16 @@ public class ServiceClass {
     public void startTournament() {
 
         showAllTournaments();
+
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int tournamentId = readValidTournamentId();
 
@@ -554,6 +600,17 @@ public class ServiceClass {
 
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+
         int tournamentId = readValidTournamentId();
 
         try {
@@ -582,6 +639,16 @@ public class ServiceClass {
     public void setPlayersPoints() {
 
         showAllTournaments();
+
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int tournamentId = readValidTournamentId();
 
@@ -653,6 +720,16 @@ public class ServiceClass {
 
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         int tournamentId = readValidTournamentId();
 
         try{
@@ -681,7 +758,7 @@ public class ServiceClass {
                             .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6s | %-4s%n",
                                     index.getAndIncrement(),
                                     player.getFideId(),
-                                    player.getFirstName() + " " + player.getLastName(),
+                                    player.getLastName() + " " + player.getFirstName(),
                                     player.getRating(),
                                     player.getPoints()
                                     ));
@@ -705,6 +782,16 @@ public class ServiceClass {
     public void createTournamentArbiter() {
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         int tournamentId = readValidTournamentId();
 
         try {
@@ -723,7 +810,7 @@ public class ServiceClass {
                         try {
                             Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
 
-                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+                            String fullName = arbiter.getLastName() + " " + arbiter.getFirstName();
 
                             System.out.printf("%-10s | %-25s | %-20s%n",
                                     a.getFideId(),
@@ -793,6 +880,16 @@ public class ServiceClass {
     public void deleteTournamentArbiter() {
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         int tournamentId = readValidTournamentId();
 
         try {
@@ -812,7 +909,7 @@ public class ServiceClass {
                         try {
                             Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
 
-                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+                            String fullName = arbiter.getLastName() + " " + arbiter.getFirstName();
 
                             System.out.printf("%-10s | %-25s | %-20s%n",
                                     a.getFideId(),
@@ -868,6 +965,16 @@ public class ServiceClass {
     public void showTournamentArbiters(){
         showAllTournaments();
 
+        try{
+            List<Tournament> tournamentList = TournamentService.getInstance().readAll();
+
+            if(tournamentList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         int tournamentId = readValidTournamentId();
 
         try {
@@ -889,7 +996,7 @@ public class ServiceClass {
                         try {
                             Arbiter arbiter = ArbiterService.getInstance().readByFideId(a.getFideId());
 
-                            String fullName = arbiter.getFirstName() + " " + arbiter.getLastName();
+                            String fullName = arbiter.getLastName() + " " + arbiter.getFirstName();
 
                             System.out.printf("%-10s | %-25s | %-20s%n",
                                     a.getFideId(),
@@ -948,7 +1055,7 @@ public class ServiceClass {
                     .forEach(player -> System.out.printf("%-4d | %-10s | %-25s | %-6s%n",
                             index.getAndIncrement(),
                             player.getFideId(),
-                            player.getFirstName() + " " + player.getLastName(),
+                            player.getLastName() + " " + player.getFirstName(),
                             player.getRating()
                     ));
 
@@ -976,7 +1083,7 @@ public class ServiceClass {
 
             AtomicInteger index = new AtomicInteger(1);
             arbitersList.forEach(a -> {
-                String fullName = a.getFirstName() + " " + a.getLastName();
+                String fullName = a.getLastName() + " " + a.getFirstName();
                 String title = a.getTitle() != null ? a.getTitle().toString() : "-";
 
                 System.out.printf("%-4d | %-10s | %-25s | %-20s%n",
@@ -1010,7 +1117,7 @@ public class ServiceClass {
 
             AtomicInteger index = new AtomicInteger(1);
             organizersList.forEach(o -> {
-                String fullName = o.getFirstName() + " " + o.getLastName();
+                String fullName = o.getLastName() + " " + o.getFirstName();
                 String phone = o.getPhoneNumber() != null ? o.getPhoneNumber() : "-";
                 String email = o.getEmail() != null ? o.getEmail() : "-";
 
@@ -1045,7 +1152,7 @@ public class ServiceClass {
 
             AtomicInteger index = new AtomicInteger(1);
             peopleList.forEach(p -> {
-                String fullName = p.getFirstName() + " " + p.getLastName();
+                String fullName = p.getLastName() + " " + p.getFirstName();
                 String fideId = p.getFideId() != null ? p.getFideId() : "-";
 
                 System.out.printf("%-4d | %-5d | %-25s | %-13s%n",
@@ -1143,6 +1250,7 @@ public class ServiceClass {
                     PersonService.getInstance().update(personId,fn,ln,person.getFideId());
                 }
 
+                System.out.println("Person with id: "+personId+" was updated!");
                 AuditService.getInstance().log("Update person with id: "+personId);
             }
             else{
@@ -1249,7 +1357,7 @@ public class ServiceClass {
         while (!isValid) {
 
             try {
-                System.out.print("Type the Organizer's ID: ");
+                System.out.print("Type the Person's ID: ");
                 organizerId = Integer.parseInt(scanner.nextLine());
                 isValid=true;
 
