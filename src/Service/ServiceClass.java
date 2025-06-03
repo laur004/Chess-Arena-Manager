@@ -1118,7 +1118,7 @@ public class ServiceClass {
                 if(arbiter==null){
                     ArbiterTitle arbiterTitle = readValidArbiterTitle();
 
-                    if(arbiterTitle==null){
+                    if(arbiterTitle!=null){
                         ArbiterService.getInstance().create(new Arbiter(fideId, arbiterTitle));
                     }
                     else{
