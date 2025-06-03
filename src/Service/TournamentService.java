@@ -31,6 +31,25 @@ public class TournamentService{
         }
     }
 
+    public int createAndReturnId(Tournament tournament) throws SQLException {
+        String sql = "INSERT INTO tournament(name, organizerId) VALUES(?,?)";
+        try(Connection conn = DatabaseUtils.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, tournament.getName());
+            ps.setInt(2, tournament.getOrganizerId());
+            ps.executeUpdate();
+
+            try(ResultSet rs = ps.getGeneratedKeys()){
+                if(rs.next()){
+                    return rs.getInt(1);
+                }
+                else {
+                    throw new SQLException("Creating tournament failed: no ID obtained.");
+                }
+            }
+        }
+    }
+
 
     public List<Tournament> readAll() throws SQLException{
         String sql="SELECT * FROM tournament";

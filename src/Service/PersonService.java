@@ -24,20 +24,34 @@ public class PersonService {
     public void create(Person person) throws SQLException {
         String sql = "INSERT INTO person(firstName, lastName, fideId) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, person.getFirstName());
+            ps.setString(2, person.getLastName());
+            ps.setString(3, person.getFideId());
+            ps.executeUpdate();
+        }
+    }
+
+    public int createAndReturnId(Person person) throws SQLException {
+        String sql = "INSERT INTO person(firstName, lastName, fideId) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             ps.setString(1, person.getFirstName());
             ps.setString(2, person.getLastName());
             ps.setString(3, person.getFideId());
             ps.executeUpdate();
 
-
-            try(ResultSet rs = ps.getGeneratedKeys()) {
+            try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
-                    person.setPersonId(rs.getInt(1));
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("Creating person failed: no ID obtained.");
                 }
             }
         }
     }
+
 
 
     public Person readByPersonId(int personId) throws SQLException {

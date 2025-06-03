@@ -1,11 +1,13 @@
 package Service;
 
-//import *;
 import Entities.*;
-import Utils.DatabaseUtils;
 
-import java.sql.ResultSet;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -15,6 +17,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ServiceClass {
     private TournamentsManager tournamentsManager;
     private final Scanner scanner;
+
+
+
+    public void closeService(){
+        AuditService.getInstance().log("Exited App");
+        AuditService.getInstance().close();
+    }
+
 
 
     private int readValidTournamentId(){
@@ -215,9 +225,10 @@ public class ServiceClass {
                 System.out.println("There is no organizer with the ID: "+organizerId);
             }
             else {
-                TournamentService.getInstance().create(new Tournament(tournamentName, organizerId));
+                int generatedId=TournamentService.getInstance().createAndReturnId(new Tournament(tournamentName, organizerId));
 
                 System.out.println("Tournament has been created!");
+                AuditService.getInstance().log("Create tournament with id: "+generatedId);
             }
 
         }catch (SQLException e){
@@ -243,6 +254,10 @@ public class ServiceClass {
                 tournamentsManager.removeTournament(tournamentId);
                 //
                 TournamentService.getInstance().delete(tournamentId);
+
+
+                AuditService.getInstance().log("Delete tournament with id: "+tournamentId);
+                System.out.println("Deleted tournament with id: "+tournamentId);
             }
             else {
                 System.out.println("There is no tournament with the id: " + tournamentId);
@@ -252,40 +267,51 @@ public class ServiceClass {
             e.printStackTrace();
         }
 
-        System.out.println("Tournament has been deleted!");
     }
 
 
 
-    public void showAllTournaments(){
+    public void showAllTournaments() {
 
-        try{
-            List<Tournament> tournamentsList=TournamentService.getInstance().readAll();
+        AuditService.getInstance().log("Show all tournaments");
 
+        try {
+            List<Tournament> tournamentsList = TournamentService.getInstance().readAll();
+
+            if (tournamentsList.isEmpty()) {
+                System.out.println("No tournaments found.");
+
+
+                return;
+            }
 
             System.out.printf("%-5s | %-40s | %-30s%n", "ID", "Tournament Name", "Organizer");
             System.out.println("---------------------------------------------------------------");
 
-            tournamentsList.forEach(t->{
-
+            tournamentsList.forEach(t -> {
                 Organizer organizer;
                 try {
                     organizer = OrganizerService.getInstance().readByOrganizerId(t.getOrganizerId());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    organizer = null;
                 }
 
-                    String organizerName = organizer.getFirstName() + " " + organizer.getLastName();
-                    System.out.printf("%-5d | %-40s | %-30s%n",
-                            t.getId(),
-                            t.getName(),
-                            organizerName);
+                String organizerName = (organizer != null)
+                        ? organizer.getFirstName() + " " + organizer.getLastName()
+                        : "[Organizer not found]";
 
+                System.out.printf("%-5d | %-40s | %-30s%n",
+                        t.getId(),
+                        t.getName(),
+                        organizerName);
             });
-        } catch ( SQLException e) {
+
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
 
     public void showTournamentStartingList() {
@@ -301,9 +327,13 @@ public class ServiceClass {
                 }
                 else{
 
+                    AuditService.getInstance().log("Show starting list" +
+                            " of tournament with id: "+tournamentId);
+
                     List<TournamentPlayer> tournamentPlayerList = TournamentPlayerService.getInstance().readAllByTournamentId(tournamentId);
                     if (tournamentPlayerList.isEmpty()) {
                         System.out.println("No players registered yet for this tournament.");
+
                         return;
                     }
 
@@ -318,6 +348,7 @@ public class ServiceClass {
                                     player.getFideId(),
                                     player.getFirstName() + " " + player.getLastName(),
                                     player.getRating()));
+
 
                 }
 
@@ -337,7 +368,7 @@ public class ServiceClass {
         try {
             Tournament tournament = TournamentService.getInstance().readByTournamentId(tournamentId);
             if (tournament == null) {
-                System.out.println("There is no tournament with the id: " + tournamentId);
+                System.out.println("There is no tournament with id: " + tournamentId);
             }
             else {
 
@@ -388,6 +419,10 @@ public class ServiceClass {
                         TournamentPlayerService.getInstance().create(fideId, tournamentId);
 
                         System.out.println("Player was added to the tournament");
+
+                        AuditService.getInstance().log("Player with FIDE ID: "+
+                                fideId+" added to tournament " +
+                                "with id: "+tournamentId);
                     }
 
 
@@ -450,6 +485,11 @@ public class ServiceClass {
                         TournamentPlayerService.getInstance().delete(fideId, tournamentId);
 
                         System.out.println("Player was removed from the tournament!");
+
+                        AuditService.getInstance().log("Player with FIDE ID: "+
+                                fideId+" removed from tournament " +
+                                "with id: "+tournamentId);
+
                     } else {
                         System.out.println("There is no player with FIDE ID: " + fideId + " in this tournament.");
                     }
@@ -491,6 +531,11 @@ public class ServiceClass {
 
                     tournamentsManager.addTournament(tournament);
 
+                    System.out.println("Tournament with id: "+tournamentId+" has been started!");
+
+                    AuditService.getInstance().log("Tournament with id: "+
+                            tournamentId+" has been started");
+
                 }
             }
 
@@ -519,6 +564,8 @@ public class ServiceClass {
                     System.out.println("Tournament has not started yet!");
                 } else {
                     tournamentsManager.getTournaments().get(tournamentId).showRounds();
+
+                    AuditService.getInstance().log("Show rounds of tournament with id: "+tournamentId);
                 }
 
             } else {
@@ -581,10 +628,12 @@ public class ServiceClass {
                         p.setPoints(points);
                     });
 
-
-
-
                     TournamentPlayerService.getInstance().updateAllTournamentPlayersPoints(tournamentId,tournamentPlayerList);
+
+                    System.out.println("Updated completed!");
+
+                    AuditService.getInstance().log("Set points to all players" +
+                            " of tournament with id: "+tournamentId);
 
                 }
 
@@ -637,7 +686,8 @@ public class ServiceClass {
                                     player.getPoints()
                                     ));
 
-
+                    AuditService.getInstance().log("Show ranking list of" +
+                            " tournament with id: "+tournamentId);
                 }
 
             }
@@ -714,6 +764,12 @@ public class ServiceClass {
                     TournamentArbiterService.getInstance().create(new TournamentArbiter(
                             fideId, tournamentId, role)
                     );
+
+                    AuditService.getInstance().log("Added arbiter with FIDE ID: "+fideId+" to " +
+                            "tournament with id: "+tournamentId);
+
+                    System.out.println("Added the arbiter with the FIDE ID: "+fideId+" to the " +
+                            "tournament with the id: "+tournamentId);
                 }
                 else{
                     System.out.println("There is already an arbiter in this tournament" +
@@ -784,6 +840,13 @@ public class ServiceClass {
                 if(arbitersList.stream()
                         .anyMatch(a -> a.getFideId().equals(fideId))){
                     TournamentArbiterService.getInstance().delete(fideId,tournamentId);
+
+                    AuditService.getInstance().log("Removed arbiter with FIDE ID: "+fideId+" from " +
+                            "tournament with id: "+tournamentId);
+
+                    System.out.println("Removed the arbiter with the FIDE ID: "+fideId+" from the " +
+                            "tournament with the id: "+tournamentId);
+
                 }
                 else{
                     System.out.println("There is no arbiter in this tournament with the id: "+fideId);
@@ -847,6 +910,8 @@ public class ServiceClass {
                     System.out.println("This tournament has no arbiters yet!");
                 }
 
+                AuditService.getInstance().log("Show all arbiters from " +
+                        "tournament with id: "+tournamentId);
 
             }
             else {
@@ -863,11 +928,13 @@ public class ServiceClass {
     public void showAllPlayers() {
 
         try{
-
+            AuditService.getInstance().log("Show all players");
 
             List<Player> playersList= PlayerService.getInstance().readAll();
             if (playersList.isEmpty()) {
                 System.out.println("No players registered yet.");
+
+
                 return;
             }
 
@@ -894,10 +961,13 @@ public class ServiceClass {
 
     public void showAllArbiters() {
         try {
+
+            AuditService.getInstance().log("Show all arbiters");
+
             List<Arbiter> arbitersList = ArbiterService.getInstance().readAll();
 
             if (arbitersList.isEmpty()) {
-                System.out.println("No arbiters registered yet.");
+                System.out.println("No arbiters registered yet!");
                 return;
             }
 
@@ -924,10 +994,13 @@ public class ServiceClass {
 
     public void showAllOrganizers() {
         try {
+
+            AuditService.getInstance().log("Show all organizers");
+
             List<Organizer> organizersList = OrganizerService.getInstance().readAll();
 
             if (organizersList.isEmpty()) {
-                System.out.println("No organizers found.");
+                System.out.println("No organizers registered yet!");
                 return;
             }
 
@@ -957,10 +1030,13 @@ public class ServiceClass {
 
     public void showAllPeople() {
         try {
+
+            AuditService.getInstance().log("Show all people");
+
             List<Person> peopleList = PersonService.getInstance().readAll();
 
             if (peopleList.isEmpty()) {
-                System.out.println("No people found.");
+                System.out.println("No people registered yet!");
                 return;
             }
 
@@ -987,6 +1063,18 @@ public class ServiceClass {
 
     public void updatePerson() {
         showAllPeople();
+
+
+        try{
+            List<Person> personList = PersonService.getInstance().readAll();
+
+            if(personList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
 
         int personId=0;
 
@@ -1054,6 +1142,8 @@ public class ServiceClass {
 
                     PersonService.getInstance().update(personId,fn,ln,person.getFideId());
                 }
+
+                AuditService.getInstance().log("Update person with id: "+personId);
             }
             else{
                 System.out.println("There is no person registered with the id: "+personId);
@@ -1088,6 +1178,9 @@ public class ServiceClass {
                     } else {
                         PlayerService.getInstance().create(new Player(fideId, (PlayerTitle) null, rating));
                     }
+
+                    AuditService.getInstance().log("Make person with id: " +person.getPersonId()+
+                            " a player with FIDE ID:"+fideId);
 
                 }
                 else{
@@ -1124,6 +1217,9 @@ public class ServiceClass {
                     else{
                         ArbiterService.getInstance().create(new Arbiter(fideId, (ArbiterTitle) null));
                     }
+
+                    AuditService.getInstance().log("Make person with id: " +person.getPersonId()+
+                            " an arbiter with FIDE ID:"+fideId);
 
                 }
                 else{
@@ -1178,6 +1274,9 @@ public class ServiceClass {
                     email = email.isEmpty() ?null:email;
 
                     OrganizerService.getInstance().create(new Organizer(organizerId,phoneNumber,email));
+
+                    AuditService.getInstance().log("Make person with id: " +person.getPersonId()+
+                            " an organizer with organizer ID: "+organizerId);
 
                 } else {
                     System.out.println("There is already an organizer with the ID: "+organizerId);
@@ -1236,7 +1335,12 @@ public class ServiceClass {
 
 
         try{
-            PersonService.getInstance().create(new Person(fideId,fn,ln));
+
+            int generatedId=PersonService.getInstance().createAndReturnId(new Person(fideId,fn,ln));
+
+            AuditService.getInstance().log("Create person with id: "+generatedId);
+
+            System.out.println("Created person with id: "+generatedId);
 
         }catch (SQLException e){
             e.printStackTrace();
@@ -1247,6 +1351,16 @@ public class ServiceClass {
 
     public void deletePlayer() {
         showAllPlayers();
+
+        try{
+            List<Player> playerList = PlayerService.getInstance().readAll();
+
+            if(playerList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         String fideId=readValidFideId();
 
@@ -1261,7 +1375,9 @@ public class ServiceClass {
                 if(tournamentList.isEmpty()){
                     PlayerService.getInstance().delete(fideId);
 
-                    System.out.println("Player was deleted!");
+                    System.out.println("Player with FIDE ID: "+fideId+" was deleted!");
+                    AuditService.getInstance().log("Delete player with FIDE ID: "+fideId);
+
                 }
                 else{
                     System.out.println("Can not delete the player because there are " +
@@ -1288,6 +1404,16 @@ public class ServiceClass {
     public void deleteArbiter() {
         showAllArbiters();
 
+        try{
+            List<Arbiter> arbiterList = ArbiterService.getInstance().readAll();
+
+            if(arbiterList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         String fideId=readValidFideId();
 
         //verify if he arbitrates tournaments
@@ -1299,6 +1425,9 @@ public class ServiceClass {
 
                 if(tournamentList.isEmpty()){
                     ArbiterService.getInstance().delete(fideId);
+
+                    System.out.println("Arbiter with FIDE ID: "+fideId+" was deleted!");
+                    AuditService.getInstance().log("Delete arbiter with FIDE ID: "+fideId);
                 }
                 else{
                     System.out.println("Can not delete the arbiter because there are " +
@@ -1324,6 +1453,17 @@ public class ServiceClass {
     }
     public void deleteOrganizer(){
         showAllOrganizers();
+
+
+        try{
+            List<Organizer> organizerList = OrganizerService.getInstance().readAll();
+
+            if(organizerList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int organizerId=0;
 
@@ -1356,6 +1496,9 @@ public class ServiceClass {
                 }
                 else{
                     OrganizerService.getInstance().delete(organizerId);
+
+                    System.out.println("Organizer with ID: "+organizerId+" was deleted!");
+                    AuditService.getInstance().log("Delete organizer with organizer ID: "+organizerId);
                 }
 
             }
@@ -1373,6 +1516,16 @@ public class ServiceClass {
 
     public void deletePerson(){
         showAllPeople();
+
+        try{
+            List<Person> personList = PersonService.getInstance().readAll();
+
+            if(personList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int personId=0;
 
@@ -1399,6 +1552,9 @@ public class ServiceClass {
 
                 if(player==null && organizer==null && arbiter==null){
                     PersonService.getInstance().delete(personId);
+
+                    System.out.println("Person with id: "+personId+" was deleted!");
+                    AuditService.getInstance().log("Delete person with id: "+personId);
                 }
                 else{
                     if(player!=null){
@@ -1436,6 +1592,16 @@ public class ServiceClass {
 
         showAllPlayers();
 
+        try{
+            List<Player> playerList = PlayerService.getInstance().readAll();
+
+            if(playerList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
         String fideId=readValidFideId();
 
         try{
@@ -1456,6 +1622,9 @@ public class ServiceClass {
                 }
 
                 PlayerService.getInstance().updateRating(fideId, rating);
+
+                System.out.println("Player with FIDE ID: "+ fideId+" was updated!");
+                AuditService.getInstance().log("Player with FIDE ID: "+ fideId+" was updated");
             }
             else {
                 System.out.println("There is no player registered with the id: "+fideId);
@@ -1473,6 +1642,17 @@ public class ServiceClass {
 
         showAllArbiters();
 
+        try{
+            List<Arbiter> arbiterList = ArbiterService.getInstance().readAll();
+
+            if(arbiterList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+
         String fideId=readValidFideId();
 
         try{
@@ -1487,6 +1667,9 @@ public class ServiceClass {
                     ArbiterService.getInstance().updateTitle(fideId, (ArbiterTitle) null);
                 }
 
+                System.out.println("Arbiter with FIDE ID: "+ fideId+" was updated!");
+                AuditService.getInstance().log("Arbiter with FIDE ID: "+ fideId+" was updated");
+
             }
             else{
                 System.out.println("There is no arbiter registered with the id: "+fideId);
@@ -1499,9 +1682,21 @@ public class ServiceClass {
 
 
     }
+
+
     public void updateOrganizer() {
 
         showAllOrganizers();
+
+        try{
+            List<Organizer> organizerList = OrganizerService.getInstance().readAll();
+
+            if(organizerList.isEmpty()){
+                return;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
         int organizerId=0;
 
@@ -1529,6 +1724,9 @@ public class ServiceClass {
 
             OrganizerService.getInstance().updatePhoneNumber(organizerId,phoneNumber);
             OrganizerService.getInstance().updateEmail(organizerId,email);
+
+            System.out.println("Organizer with id: "+ organizerId+" was updated!");
+            AuditService.getInstance().log("Organizer with id: "+ organizerId+" was updated!");
 
         }
         else{
