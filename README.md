@@ -40,14 +40,15 @@
 
 10. **startTournament()**  
     Starts the tournament and generates pairings using the round-robin system.
+    There must be at least 5 players registered!
 
-11. **showRounds()**  
+12. **showRounds()**  
     Shows all pairings (matches) per round for a selected tournament.
 
-12. **setPlayersPoints()**  
+13. **setPlayersPoints()**  
     Allows the user to input points for each player in each round of a tournament.
 
-13. **showRanking()**  
+14. **showRanking()**  
     Displays the tournament ranking table, sorted by points and rating.
 
 ---
