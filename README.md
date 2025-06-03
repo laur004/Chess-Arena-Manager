@@ -114,7 +114,37 @@
 29. **deletePerson()**  
     Deletes a person from the system, only if they are not linked to other roles.
 
+---
 
-## Available pairing-systems
-### -Round-Robin
+### Available pairing-systems
+#### -Round-Robin
 
+---
+
+# 🛠️ Technical Details
+- **Language**: Java 21.0.6 (LTS)
+- **Runtime**: Java SE Runtime Environment (build 21.0.6+8-LTS-188)
+
+---
+## 🗄️ Database
+
+- **Database**: MySQL (using InnoDB engine, `utf8mb4` collation)
+- **Database Connectivity**:  
+  Uses standard **JDBC** with `java.sql` API and  
+  **MySQL Connector/J 9.3.0** (`mysql-connector-j-9.3.0.jar`)
+
+![Database schema](ConceptualDiagram.png)
+
+### 📦 SQL Scripts
+
+- [Database schema (`CREATE TABLE`)](src/sql/schema.sql)
+- [Sample data (`INSERT` statements)](src/sql/data.sql)
+
+---
+## 🧾 Audit Logging
+
+- **Format**: CSV file (`audit.csv`)
+- **Mechanism**: Written using standard Java `FileWriter`
+- **Content**: Each logged entry contains:
+  - Action name (e.g., "Create tournament with id "+generatedTournamentId)
+  - Timestamp of execution
