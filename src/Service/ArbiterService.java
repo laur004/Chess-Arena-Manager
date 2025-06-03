@@ -26,7 +26,8 @@ public class ArbiterService {
 
 
         String sql = "INSERT INTO arbiter(fideId, title) VALUES (?, ?)";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, arbiter.getFideId());
             ps.setString(2, arbiter.getTitle() != null ? arbiter.getTitle().name() : null);
             ps.executeUpdate();
@@ -38,21 +39,23 @@ public class ArbiterService {
         String sql = "SELECT a.fideId, p.firstName, p.lastName, a.title " +
                 "FROM arbiter a JOIN person p ON a.fideId = p.fideId " +
                 "WHERE a.fideId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, fideId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                ArbiterTitle title = rs.getString("title") != null
-                        ? ArbiterTitle.valueOf(rs.getString("title"))
-                        : null;
+            try(ResultSet rs = ps.executeQuery()){
+                if (rs.next()) {
+                    ArbiterTitle title = rs.getString("title") != null
+                            ? ArbiterTitle.valueOf(rs.getString("title"))
+                            : null;
 
-                Arbiter arbiter = new Arbiter(
-                        rs.getString("firstName"),
-                        rs.getString("lastName"),
-                        title
-                );
-                arbiter.setFideId(rs.getString("fideId"));
-                return arbiter;
+                    Arbiter arbiter = new Arbiter(
+                            rs.getString("firstName"),
+                            rs.getString("lastName"),
+                            title
+                    );
+                    arbiter.setFideId(rs.getString("fideId"));
+                    return arbiter;
+                }
             }
         }
         return null;
@@ -64,8 +67,9 @@ public class ArbiterService {
         String sql = "SELECT a.fideId, p.firstName, p.lastName, a.title " +
                 "FROM arbiter a JOIN person p ON a.fideId = p.fideId";
 
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             Statement ps = conn.createStatement();
+             ResultSet rs = ps.executeQuery(sql)) {
 
             while (rs.next()) {
                 ArbiterTitle title = rs.getString("title") != null
@@ -87,7 +91,8 @@ public class ArbiterService {
 
     public void updateTitle(String fideId, ArbiterTitle newTitle) throws SQLException {
         String sql = "UPDATE arbiter SET title = ? WHERE fideId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);) {
 
             if(newTitle!=null){
                 ps.setString(1, newTitle.name());
@@ -104,7 +109,8 @@ public class ArbiterService {
 
     public void delete(String fideId) throws SQLException {
         String sql = "DELETE FROM arbiter WHERE fideId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, fideId);
             ps.executeUpdate();
         }

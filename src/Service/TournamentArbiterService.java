@@ -26,7 +26,8 @@ public class TournamentArbiterService {
 
     public void create(TournamentArbiter ta) throws SQLException {
         String sql = "INSERT INTO tournamentarbiter (fideId, tournamentId, role) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ta.getFideId());
             ps.setInt(2, ta.getTournamentId());
             ps.setString(3, ta.getRole());
@@ -45,8 +46,9 @@ public class TournamentArbiterService {
 
         List<TournamentArbiter> list = new ArrayList<>();
 
-        PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
-            ResultSet rs = DatabaseUtils.getConnection().createStatement().executeQuery(sql);
+        try(Connection conn = DatabaseUtils.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 ArbiterTitle title = rs.getString("title") != null
@@ -63,7 +65,7 @@ public class TournamentArbiterService {
                 list.add(ta);
             }
 
-
+        }
         return list;
     }
 
@@ -79,23 +81,25 @@ public class TournamentArbiterService {
 
         List<TournamentArbiter> list = new ArrayList<>();
 
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, tournamentId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                ArbiterTitle title = rs.getString("title") != null
-                        ? ArbiterTitle.valueOf(rs.getString("title"))
-                        : null;
-                TournamentArbiter ta = new TournamentArbiter(
-                        rs.getString("fideId"),
-                        rs.getString("firstName"),
-                        rs.getString("lastName"),
-                        title,
-                        rs.getInt("tournamentId"),
-                        rs.getString("role")
-                );
-                list.add(ta);
+                while (rs.next()) {
+                    ArbiterTitle title = rs.getString("title") != null
+                            ? ArbiterTitle.valueOf(rs.getString("title"))
+                            : null;
+                    TournamentArbiter ta = new TournamentArbiter(
+                            rs.getString("fideId"),
+                            rs.getString("firstName"),
+                            rs.getString("lastName"),
+                            title,
+                            rs.getInt("tournamentId"),
+                            rs.getString("role")
+                    );
+                    list.add(ta);
+                }
             }
         }
 
@@ -108,23 +112,27 @@ public class TournamentArbiterService {
         String sql= "SELECT ta.tournamentId FROM tournamentarbiter ta " +
                     "JOIN tournament t ON ta.tournamentId=t.tournamentId "+
                     "WHERE fideId=? ";
-        PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql);
-        ps.setString(1, fideId);
+        try(Connection conn = DatabaseUtils.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fideId);
 
-        ResultSet rs= ps.executeQuery();
+            try(ResultSet rs = ps.executeQuery()) {
 
-        List<Tournament> list = new ArrayList<>();
-        while(rs.next()){
-                list.add(TournamentService.getInstance().readByTournamentId(rs.getInt("tournamentId")));
+                List<Tournament> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(TournamentService.getInstance().readByTournamentId(rs.getInt("tournamentId")));
+                }
+                return list;
+            }
         }
-        return list;
     }
 
 
 
     public void updateRole(String fideId, int tournamentId, String newRole) throws SQLException {
         String sql = "UPDATE tournamentarbiter SET role = ? WHERE fideId = ? AND tournamentId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newRole);
             ps.setString(2, fideId);
             ps.setInt(3, tournamentId);
@@ -135,7 +143,8 @@ public class TournamentArbiterService {
 
     public void updateTournamentArbiter(String oldFideId, int tournamentId, String newFideId) throws SQLException {
         String sql = "UPDATE tournamentarbiter SET fideId = ? WHERE fideId = ? AND tournamentId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newFideId);
             ps.setString(2, oldFideId);
             ps.setInt(3, tournamentId);
@@ -146,7 +155,8 @@ public class TournamentArbiterService {
 
     public void delete(String fideId, int tournamentId) throws SQLException {
         String sql = "DELETE FROM tournamentarbiter WHERE fideId = ? AND tournamentId = ?";
-        try (PreparedStatement ps = DatabaseUtils.getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, fideId);
             ps.setInt(2, tournamentId);
             ps.executeUpdate();
