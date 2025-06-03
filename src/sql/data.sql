@@ -28,7 +28,7 @@ INSERT INTO arbiter (fideId, title) VALUES
                                         ('1244582', NULL),
                                         ('623539', 'IA');
 
-INSERT INTO tournament (id, name, organizerId) VALUES
+INSERT INTO tournament (tournamentId, name, organizerId) VALUES
                                                    (2, 'Cupa primaverii', 9),
                                                    (3, 'Norway Chess', 7),
                                                    (4, 'Tournament with 0 players', 9);
